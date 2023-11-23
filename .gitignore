@@ -1,0 +1,6 @@
+# Project exclude paths
+/cmake-build-debug/
+/build/
+/.idea/
+/.vscode/
+/lib/libhw_grpc_proto.a
