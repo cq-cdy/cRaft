@@ -20,13 +20,11 @@ namespace craft {
             m_electionTimer->start(getElectionTimeOut(ELECTION_TIMEOUT));
             for (; !m_iskilled_;) {
                 RETURN_TYPE type_;
-                spdlog::debug("wait time out\n");
                 (m_electionTimer->m_chan_) >> type_;
                 if (type_ == RETURN_TYPE::TIME_OUT) {
-                    spdlog::debug("time out\n");
                     startElection(this);
                 } else {
-                    spdlog::debug("not fund typed\n");
+                    spdlog::debug("not found type\n");
                 }
             }
         };
@@ -37,7 +35,6 @@ namespace craft {
         rf->co_mtx_.lock();
         rf->changeToState(STATE::CANDIDATE);
         rf->co_mtx_.unlock();
-        spdlog::debug("after startElection state ={}", rf->stringState(rf->m_state_));
         int allCount = rf->m_peers_->numPeers(), grantedCount = 1, resCount = 1;
         spdlog::debug("allcount = {}\n", allCount);
         std::shared_ptr<co_chan<bool>> grantedChan(new co_chan<bool>(allCount - 1));
@@ -49,12 +46,10 @@ namespace craft {
                 std::shared_ptr<RequestVoteArgs> args(new RequestVoteArgs);
                 args->set_candidateid(rf->m_me_);
                 args->set_term(rf->m_current_term_);
-                spdlog::debug("before sendRequestVote,me({}),args.term = {}", rf->m_me_, rf->m_current_term_);
                 std::shared_ptr<RequestVoteReply> reply(new RequestVoteReply);
                 sendRequestVote(rf, i, args, reply);
                 bool is_voted = reply->votegranted();
                 *grantedChan << is_voted ; //  default false ,if rpc  success true;
-                spdlog::debug("after push chanvote ");
                 if(is_voted){
                     rf->m_electionTimer->reset(
                             getElectionTimeOut(ELECTION_TIMEOUT));
@@ -70,7 +65,6 @@ namespace craft {
             };
         }
 
-        spdlog::debug("wait tongji vote");
         bool flag;
         while (resCount != allCount) {
             *grantedChan >> flag;
@@ -87,7 +81,6 @@ namespace craft {
                         "before try change to leader,count:{}, currentTerm: {}, "
                         "argsTerm: {}",
                         grantedCount, rf->m_current_term_, rf->m_current_term_);
-                spdlog::debug("end startElection state ={}", rf->stringState(rf->m_state_));
                 rf->changeToState(STATE::LEADER);
             } else {
                 rf->changeToState(STATE::FOLLOWER);
@@ -95,9 +88,6 @@ namespace craft {
             }
         }
         rf->co_mtx_.unlock();
-
-
-
     }
 
     void sendRequestVote(Raft *rf, int serverId,
@@ -109,7 +99,6 @@ namespace craft {
             spdlog::error("serverId:{} invalid in sendRequestVote!", serverId);
             return;
         }
-        spdlog::debug("in sendRequestVote");
         for (int i = 0; i < 5 && !rf->m_iskilled_; i++) {
             ClientContext context;
             std::chrono::system_clock::time_point deadline =
@@ -121,7 +110,7 @@ namespace craft {
                 spdlog::debug("[{}],call voteRPC error\n", serverId);
                 continue;
             } else {
-                spdlog::debug("to {} success call rpc\n", serverId);
+                spdlog::debug("to {} success call voteRPC\n", serverId);
                 break;
             }
         }

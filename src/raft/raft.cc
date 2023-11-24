@@ -20,7 +20,7 @@ Raft::Raft(int me, AbstractPersist *persister, co_chan<Command> *applyCh)
     for (int i = 0; i < m_peers_->numPeers(); i++) {
         m_appendEntriesTimers_.emplace_back(new Timer);
     }
-    // loadFromPersist();
+    loadFromPersist();
     co_launchRpcSevices();
     // todo read from Persister
 }
@@ -68,7 +68,7 @@ void deleter(T *&ptr) {
     }
 }
 
-bool Raft::is_killed() { return m_iskilled_; }
+bool Raft::is_killed() const { return m_iskilled_; }
 
 std::string Raft::stringState(STATE state) {
     std::string a;
@@ -90,7 +90,7 @@ Raft::~Raft() {
     deleter(m_applyCh_);
     deleter(m_stopCh_);
     deleter(m_notifyApplyCh_);
-    // deleter(m_persister_);
+    deleter(m_persister_);
     deleter(m_electionTimer);
     for (auto &ptr : m_appendEntriesTimers_) {
         deleter(ptr);

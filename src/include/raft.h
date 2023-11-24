@@ -34,7 +34,7 @@ namespace craft {
         void persist();
         void loadFromPersist();
 
-        bool is_killed() ;
+        bool is_killed() const ;
 
         void changeToState(STATE toState) ;
 

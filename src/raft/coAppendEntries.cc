@@ -9,11 +9,8 @@ namespace craft {
                              const std::shared_ptr<AppendEntriesReply> &reply);
 
     void Raft::co_appendAentries() {
-        spdlog::debug("co_appendAentries()");
-
         go [this] {
             for (; !m_iskilled_;) {
-                spdlog::debug("befor HEART_BEAT_TIMEOUT");
                 co_sleep(HEART_BEAT_TIMEOUT);
                 STATE state = m_state_;
                 if (state == STATE::LEADER) {
@@ -67,7 +64,6 @@ namespace craft {
 
                 } else {
                     RETURN_TYPE a;
-                    spdlog::debug("wait state change");
                     *m_StateChangedCh_ >> a;
                     spdlog::debug(
                             "recvive state changed state:[{}],my term is [{}]",
