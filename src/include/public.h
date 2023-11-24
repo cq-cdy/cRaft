@@ -33,17 +33,17 @@ enum class RETURN_TYPE {
 static std::vector<std::string> peersAddr = {
         "127.0.0.1:9100", "127.0.0.1:9101", "127.0.0.1:9102", "127.0.0.1:51003", "127.0.0.1:21704"
 };
-struct Command {
+struct Command_ {
 };
 struct ApplyMsg {
     bool commandValid;
-    Command *command;
+    Command_ *command;
     int commandIndex;
 };
 
 struct LogEntry_ {
     int term;
-    Command *command;
+    Command_ *command;
 };
 
 static uint getElectionTimeOut(uint timeout) {

@@ -16,6 +16,7 @@ Raft::Raft(int me, AbstractPersist *persister, co_chan<Command> *applyCh)
     m_stopCh_ = new co_chan<void *>(1);
     /* timer */
     m_electionTimer = new Timer();
+    m_applyTimer = new Timer();
 
     for (int i = 0; i < m_peers_->numPeers(); i++) {
         m_appendEntriesTimers_.emplace_back(new Timer);

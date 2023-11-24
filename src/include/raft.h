@@ -53,6 +53,8 @@ namespace craft {
         int m_snopShotIndex = 0;
         int m_snopShotTerm = 0;
         bool m_iskilled_ = false;
+        std::vector<int> m_nextIndex;
+        std::vector<int> m_matchIndex;
 
     public:
 
@@ -68,7 +70,9 @@ namespace craft {
         STATE m_state_ = STATE::FOLLOWER;
         std::vector<int> m_nextIndex_;
         std::vector<int> m_matchIndex_;
+
         Timer *m_electionTimer = nullptr;
+        Timer *m_applyTimer = nullptr;
         std::vector<Timer *> m_appendEntriesTimers_{nullptr};
 
 

@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
             sleep(1);
         }
     };
-    sleep(1000);
+    sleep(1000000);
 
     return 0;
 }

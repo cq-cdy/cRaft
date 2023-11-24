@@ -1,4 +1,6 @@
 syntax = "proto3";
+
+
 /*
 Vote
 */
@@ -35,8 +37,17 @@ message AppendEntriesReply{
 }
 
 /*service*/
+message ResultPackge{
+    int32 index =1;
+    int32 term = 2;
+    bool    isLeader = 3;
+}
+message Command{
+    string content = 1;
+}
 service RaftRPC{
 
+    rpc submitCommand(Command) returns(ResultPackge){}
     rpc requestVoteRPC(RequestVoteArgs)  returns (RequestVoteReply){}
     rpc appendEntries(AppendEntriesArgs) returns (AppendEntriesReply){}
 }
