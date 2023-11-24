@@ -12,7 +12,6 @@ namespace craft {
 
         for (auto &file: all_persist_files) {
             std::filesystem::path dir = absPersistPath_;
-            std::filesystem::path fname = file;
             std::filesystem::path full_path = dir /"persist"/ file;
             if (! std::filesystem::exists(full_path.parent_path())) {
                 // 如果父目录不存在，创建它

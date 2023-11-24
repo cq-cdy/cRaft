@@ -14,13 +14,9 @@
 using uint = unsigned int;
 
 const uint ELECTION_TIMEOUT = 1500;  // ms
-const uint RPC_TIMEOUT = 300;       // ms
-const uint HEART_BEAT_TIMEOUT = 200; //ms
+const uint RPC_TIMEOUT = 200;       // ms
+const uint HEART_BEAT_TIMEOUT = 300; //ms
 
-const std::string last_log_index_persist_filepath = "../.data/persist/lastlogindex.data";
-const std::string log_entry_term_persist_filepath = "../.data/persist/logentry.term.data";
-const std::string log_entry_command_persist_filepath = "../.data/persist/logentry.command.data";
-const std::string votefor_persist_filepath = "../.data/persist/votefor.data";
 
 enum class STATE {
     FOLLOWER,
@@ -35,7 +31,7 @@ enum class RETURN_TYPE {
     STATE_CHANGED,
 };
 static std::vector<std::string> peersAddr = {
-        "127.0.0.1:27700", "127.0.0.1:27101", "127.0.0.1:27102"//, "127.0.0.1:52003", "127.0.0.1:27704"
+        "127.0.0.1:9000", "127.0.0.1:9001", "127.0.0.1:9002", "127.0.0.1:52003", "127.0.0.1:27704"
 };
 struct Command {
 };
@@ -53,7 +49,7 @@ struct LogEntry_ {
 static uint getElectionTimeOut(uint timeout) {
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(timeout, timeout * 2);
+    std::uniform_int_distribution<> dis(timeout, timeout*2);
     return dis(gen);
 
 }

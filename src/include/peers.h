@@ -15,13 +15,6 @@ class RpcClients {
         return &peerClients;
     }
 
-//    std::unique_ptr<RaftRPC::Stub>* operator[](int index) const {
-//        if (index >= 0 && index < m_num_peers_) {
-//            return &m_peerStubs[index];
-//        }
-//        return nullptr;
-//    }
-
     std::vector<std::unique_ptr<RaftRPC::Stub>>& getPeerStubs(){
         return m_peerStubs;
     }

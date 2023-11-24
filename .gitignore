@@ -4,3 +4,4 @@
 /.idea/
 /.vscode/
 /lib/libhw_grpc_proto.a
+/bin

@@ -4,56 +4,94 @@
 
 namespace craft {
 
-void Raft::co_appendAentries() {
-    spdlog::debug("co_appendAentries()");
-    static std::vector<std::unique_ptr<RaftRPC::Stub>> &stubs =
-        m_peers_->getPeerStubs();
-    go[this] {
-        for (;;) {
-            co_sleep(HEART_BEAT_TIMEOUT);
-            STATE state = m_state_;
-          
-            if (state == STATE::LEADER) {
-                spdlog::debug("in co_appendAentries state:[{}],my term is [{}]", stringState(state),m_current_term_);
-                go[this] {
+    void sendToAppendEntries(Raft *rf, int serverId,
+                             const std::shared_ptr<AppendEntriesArgs> &args,
+                             const std::shared_ptr<AppendEntriesReply> &reply);
+
+    void Raft::co_appendAentries() {
+        spdlog::debug("co_appendAentries()");
+
+        go [this] {
+            for (; !m_iskilled_;) {
+                spdlog::debug("befor HEART_BEAT_TIMEOUT");
+                co_sleep(HEART_BEAT_TIMEOUT);
+                STATE state = m_state_;
+                if (state == STATE::LEADER) {
+                    spdlog::debug("in co_appendAentries state:[{}],my term is [{}]",
+                                  stringState(state), m_current_term_);
+                    int allCount = m_peers_->numPeers(), successCount = 1,
+                            resCount = 1;
+                    std::shared_ptr<co_chan<bool>> successChan(
+                            new co_chan<bool>(allCount - 1));
                     for (int i = 0; i < this->m_peers_->numPeers(); i++) {
                         if (i == this->m_me_) {
                             continue;
                         }
-                        ClientContext context;
-                        std::chrono::system_clock::time_point deadline =
-                            std::chrono::system_clock::now() +
-                            std::chrono::milliseconds(RPC_TIMEOUT);
-                        context.set_deadline(deadline);
-                        AppendEntriesArgs args;
-                        auto entry   = args.add_entries();
-                        args.set_term(101);
-                        entry->set_command("test log");
-                        auto entry2   = args.add_entries();
-                        entry2->set_command("test log2");
-
-                        AppendEntriesReply response;
-                        Status ok =
-                            stubs[i]->appendEntries(&context, args, &response);
-                        if (ok.ok()) {
-                            spdlog::debug("heat beat ok");
-                            m_electionTimer->reset(
-                                getElectionTimeOut(ELECTION_TIMEOUT));
-                            if(response.term() > m_current_term_){
-                                changeToState(STATE::FOLLOWER);
+                        std::shared_ptr<AppendEntriesArgs> args(
+                                new AppendEntriesArgs);
+                        args->set_term(m_current_term_);
+                        std::shared_ptr<AppendEntriesReply> reply(
+                                new AppendEntriesReply);
+                        go [this, i, args, reply, successChan] {
+                            sendToAppendEntries(this, i, args, reply);
+                            *successChan << reply->success();
+                            if(reply->success()){
+                                m_electionTimer->reset(getElectionTimeOut(ELECTION_TIMEOUT));
                             }
-                        } else {
-                            spdlog::error("heat beat err");
+                            co_mtx_.lock();
+                            if (m_state_ == STATE::LEADER) {
+                                if (reply->term() > m_current_term_ &&
+                                    m_state_ != STATE::FOLLOWER) {
+                                    m_current_term_ = reply->term();
+                                    changeToState(STATE::FOLLOWER);
+                                }
+                            }
+                            co_mtx_.unlock();
+                        };
+                    }
+
+                    bool flag;
+                    while (resCount != allCount) {
+                        *successChan >> flag;
+                        resCount++;
+                        if (flag) {
+                            successCount++;
                         }
                     }
-                };
-            } else {
-                RETURN_TYPE a;
-                *m_StateChangedCh_ >> a;
-                spdlog::debug("recvive state changed");
-                spdlog::debug("in co_appendAentries state:[{}],my term is [{}]", stringState(state),m_current_term_);
+                    if (m_state_ != STATE::LEADER) {
+                        co_mtx_.unlock();
+                        continue;
+                    }
+                    spdlog::debug("send hb end,all = {} ,success = [{}]", allCount,
+                                  successCount);
+
+                } else {
+                    RETURN_TYPE a;
+                    spdlog::debug("wait state change");
+                    *m_StateChangedCh_ >> a;
+                    spdlog::debug(
+                            "recvive state changed state:[{}],my term is [{}]",
+                            stringState(state), m_current_term_);
+                }
             }
+        };
+    }
+
+    void sendToAppendEntries(Raft *rf, int serverId,
+                             const std::shared_ptr<AppendEntriesArgs> &args,
+                             const std::shared_ptr<AppendEntriesReply> &reply) {
+        static std::vector<std::unique_ptr<RaftRPC::Stub>> &stubs =
+                rf->m_peers_->getPeerStubs();
+        ClientContext context;
+        std::chrono::system_clock::time_point deadline =
+                std::chrono::system_clock::now() +
+                std::chrono::milliseconds(RPC_TIMEOUT);
+        context.set_deadline(deadline);
+        Status ok = stubs[serverId]->appendEntries(&context, *args, reply.get());
+        if (ok.ok()) {
+            spdlog::debug("heat beat ok");
+        } else {
+            spdlog::error("heat beat err");
         }
-    };
-}
+    }
 };  // namespace craft
