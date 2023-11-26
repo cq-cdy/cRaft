@@ -15,6 +15,7 @@ namespace craft {
             if (request->term() > m_rf_->m_current_term_) {
                 m_rf_->m_current_term_  = request->term();
                 m_rf_->changeToState(STATE::FOLLOWER);
+                m_rf_->m_electionTimer->reset(getElectionTimeOut(ELECTION_TIMEOUT));
             }else{
                 if(m_rf_->m_state_ !=STATE::FOLLOWER){
                     spdlog::error(" not follower ,but reveiced heart beat, my:[{}]",m_rf_->stringState(m_rf_->m_state_));

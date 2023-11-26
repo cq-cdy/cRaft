@@ -1,7 +1,5 @@
 #include <libgo/context/context.h>
 #include <libgo/coroutine.h>
-#include <libgo/defer/defer.h>
-
 #include "peers.h"
 #include "public.h"
 #include "raft.h"
@@ -16,7 +14,6 @@ namespace craft {
 
     void Raft::co_startElection() {
         go [this] {
-            m_state_ = STATE::FOLLOWER;
             m_electionTimer->reset(getElectionTimeOut(ELECTION_TIMEOUT));
             for (; !m_iskilled_;) {
                 RETURN_TYPE type_;

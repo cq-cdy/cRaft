@@ -11,11 +11,11 @@ namespace craft {
     void Raft::co_appendAentries() {
         go [this] {
             for (; !m_iskilled_;) {
-                co_sleep(HEART_BEAT_INTERVAL);
-                STATE state = m_state_;
-                if (state == STATE::LEADER) {
+                RETURN_TYPE X;
+                m_appendEntriesTimer->m_chan_>>X;
+                if (m_state_ == STATE::LEADER) {
                     spdlog::debug("in co_appendAentries state:[{}],my term is [{}]",
-                                  stringState(state), m_current_term_);
+                                  stringState(m_state_), m_current_term_);
                     int allCount = m_peers_->numPeers(), successCount = 1,
                             resCount = 1;
                     std::shared_ptr<co_chan<bool>> successChan(
@@ -39,9 +39,9 @@ namespace craft {
                             if (reply->term() > m_current_term_ ) {
                                 m_current_term_ = reply->term();
                                 changeToState(STATE::FOLLOWER);
+                                m_electionTimer->reset(getElectionTimeOut(ELECTION_TIMEOUT));
                             }
                             co_mtx_.unlock();
-                            m_electionTimer->reset(getElectionTimeOut(ELECTION_TIMEOUT));
 
                         };
                     }
@@ -65,7 +65,7 @@ namespace craft {
                     *m_StateChangedCh_ >> a;
                     spdlog::debug(
                             "recvive state changed state:[{}],my term is [{}]",
-                            stringState(state), m_current_term_);
+                            stringState(m_state_), m_current_term_);
                 }
             }
         };

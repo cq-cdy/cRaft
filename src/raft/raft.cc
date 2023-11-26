@@ -42,25 +42,28 @@ namespace craft {
             if (this->m_state_ != STATE::FOLLOWER) {
                 this->m_votedFor_ = -1;
             }
+            m_appendEntriesTimer->stop();
         } else if (toState == STATE::CANDIDATE) {
             this->m_current_term_++;
             this->m_votedFor_ = this->m_me_;
             m_electionTimer->reset(getElectionTimeOut(ELECTION_TIMEOUT));
+            m_appendEntriesTimer->stop();
         } else if (toState == STATE::LEADER) {
-            // TODO
             int lastLogIndex = getLastLogIndex();
             for (int i = 0; i < m_peers_->numPeers(); i++) {
                 m_nextIndex_[i] = lastLogIndex + 1;
                 m_matchIndex_[i] = lastLogIndex;
             }
             m_electionTimer->stop();
-            //m_electionTimer->reset(getElectionTimeOut(ELECTION_TIMEOUT));
+            m_appendEntriesTimer->reset(HEART_BEAT_INTERVAL);
         } else {
             spdlog::critical("change to unkown toState");
         }
         m_state_ = toState;
         spdlog::debug("changeToState,change to [{}]", stringState(m_state_));
-        *m_StateChangedCh_ << RETURN_TYPE::STATE_CHANGED;
+        if(m_StateChangedCh_->empty()){
+            *m_StateChangedCh_ << RETURN_TYPE::STATE_CHANGED;
+        }
     }
 
     template<typename T>
@@ -158,8 +161,14 @@ namespace craft {
             term = m_current_term_;
             m_matchIndex_[m_me_] = index;
             m_nextIndex_[m_me_] = index + 1;
+            m_appendEntriesTimer->reset(0);
         }
+        go[this]{
+            co_sleep(50);
+            m_appendEntriesTimer->reset(HEART_BEAT_INTERVAL);
+        };
         co_mtx_.unlock();
+
         return ResultPackge{index, term, true};
     }
 }  // namespace craft

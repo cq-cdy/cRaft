@@ -44,6 +44,7 @@ public:
         stop();
         reset_(millisec);
     }
+
     void stop() {
         std::lock_guard<std::mutex> lock(m_set_V_mtx_);
         m_running_ = false;
