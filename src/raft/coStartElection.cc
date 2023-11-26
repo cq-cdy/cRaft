@@ -17,7 +17,7 @@ namespace craft {
     void Raft::co_startElection() {
         go [this] {
             m_state_ = STATE::FOLLOWER;
-            m_electionTimer->start(getElectionTimeOut(ELECTION_TIMEOUT));
+            m_electionTimer->reset(getElectionTimeOut(ELECTION_TIMEOUT));
             for (; !m_iskilled_;) {
                 RETURN_TYPE type_;
                 (m_electionTimer->m_chan_) >> type_;

@@ -15,7 +15,7 @@ using uint = unsigned int;
 
 const uint ELECTION_TIMEOUT = 1000;  // ms
 const uint RPC_TIMEOUT = 150;       // ms
-const uint HEART_BEAT_TIMEOUT = 300; //ms
+const uint HEART_BEAT_INTERVAL= 300; //ms
 
 
 enum class STATE {
@@ -31,9 +31,15 @@ enum class RETURN_TYPE {
     STATE_CHANGED,
 };
 static std::vector<std::string> peersAddr = {
-        "127.0.0.1:29870", "127.0.0.1:28335", "127.0.0.1:27832", "127.0.0.1:21003", "127.0.0.1:21704"
+        "127.0.0.1:51116", "127.0.0.1:33515", "127.0.0.1:35132", "127.0.0.1:31513", "127.0.0.1:55104"
 };
 struct Command_ {
+    std::string  content;
+};
+struct ResultPackge{
+    int term{};
+    int index{};
+    bool isLeader{};
 };
 struct ApplyMsg {
     bool commandValid;
@@ -43,7 +49,7 @@ struct ApplyMsg {
 
 struct LogEntry_ {
     int term;
-    Command_ *command;
+    Command_ command;
 };
 
 static uint getElectionTimeOut(uint timeout) {

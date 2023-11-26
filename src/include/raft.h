@@ -14,7 +14,7 @@ namespace craft {
     class Raft final : public noncopyable {
 
     public:
-        explicit Raft(int me, AbstractPersist *persister, co_chan<Command> *applyCh) ;
+        explicit Raft(int me, AbstractPersist *persister, co_chan<Command_> *applyCh) ;
 
         void launch() ;
 
@@ -47,6 +47,8 @@ namespace craft {
         // use to debug
         std::string stringState(STATE state);
 
+        ResultPackge submitCommand(Command_ command);
+
 
 
     public:
@@ -67,7 +69,7 @@ namespace craft {
 
        std::vector<LogEntry> m_logs_{LogEntry()};
         co_mutex co_mtx_;
-        co_chan<Command> *m_applyCh_ = nullptr;
+        co_chan<Command_> *m_applyCh_ = nullptr;
         co_chan<void *> *m_notifyApplyCh_ = nullptr;
         co_chan<RETURN_TYPE> *m_StateChangedCh_ = nullptr;
 
@@ -81,6 +83,7 @@ namespace craft {
 
         Timer *m_electionTimer = nullptr;
         Timer *m_applyTimer = nullptr;
+        Timer *m_appendEntriesTimer = nullptr;
         std::vector<Timer *> m_appendEntriesTimers_{nullptr};
 
 

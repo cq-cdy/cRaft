@@ -17,12 +17,10 @@ namespace craft {
                 m_rf_->changeToState(STATE::FOLLOWER);
             }else{
                 if(m_rf_->m_state_ !=STATE::FOLLOWER){
-                    spdlog::error(" not follower ,butreveiced heart beat, my:[{}]",m_rf_->stringState(m_rf_->m_state_));
+                    spdlog::error(" not follower ,but reveiced heart beat, my:[{}]",m_rf_->stringState(m_rf_->m_state_));
                     m_rf_->changeToState(STATE::FOLLOWER);
                 }else{
                     response->set_success(false);
-//                    LogEntry log;
-//                    m_rf_->m_logs_.push_back(log);
                     m_rf_->m_electionTimer->reset(getElectionTimeOut(ELECTION_TIMEOUT));
                     spdlog::debug("RECEIVE heart beat my state is [{}],my term[{}]", m_rf_->stringState(m_rf_->m_state_),m_rf_->m_current_term_);
                 }

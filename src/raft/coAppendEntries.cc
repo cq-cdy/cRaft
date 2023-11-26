@@ -11,7 +11,7 @@ namespace craft {
     void Raft::co_appendAentries() {
         go [this] {
             for (; !m_iskilled_;) {
-                co_sleep(HEART_BEAT_TIMEOUT);
+                co_sleep(HEART_BEAT_INTERVAL);
                 STATE state = m_state_;
                 if (state == STATE::LEADER) {
                     spdlog::debug("in co_appendAentries state:[{}],my term is [{}]",
@@ -39,17 +39,10 @@ namespace craft {
                             if (reply->term() > m_current_term_ ) {
                                 m_current_term_ = reply->term();
                                 changeToState(STATE::FOLLOWER);
-                                m_electionTimer->reset(getElectionTimeOut(ELECTION_TIMEOUT));
                             }
                             co_mtx_.unlock();
+                            m_electionTimer->reset(getElectionTimeOut(ELECTION_TIMEOUT));
 
-//                            if (m_state_ == STATE::LEADER) {
-//                                if (reply->term() > m_current_term_ &&
-//                                    m_state_ != STATE::FOLLOWER) {
-//                                    m_current_term_ = reply->term();
-//                                    changeToState(STATE::FOLLOWER);
-//                                }
-//                            }
                         };
                     }
 
@@ -62,7 +55,6 @@ namespace craft {
                         }
                     }
                     if (m_state_ != STATE::LEADER) {
-                        co_mtx_.unlock();
                         continue;
                     }
                     spdlog::debug("send hb end,all = {} ,success = [{}]", allCount,

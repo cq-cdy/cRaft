@@ -25,8 +25,6 @@ public:
     }
 };
 
-
-
 int main(int argc, char **argv) {
     std::string exec_path = getExecutablePath();
     std::cout << "执行文件路径: " << exec_path << std::endl;
@@ -52,5 +50,17 @@ int main(int argc, char **argv) {
     KVServer kv(abs_path);
     craft::Raft raft(me, &kv, nullptr);
     raft.launch();
+    while(true){
+        sleep(2);
+        Command_ command;
+
+        command.content = "{""option"":""Add"",""Id"":""2022068085404030"",""Name"":""Cdy""}";
+        auto pack = raft.submitCommand(command);
+        if(pack.isLeader){
+            spdlog::info("user submit log success");
+        }else{
+            spdlog::info("user submit log error");
+        }
+    }
     return 0;
 }
