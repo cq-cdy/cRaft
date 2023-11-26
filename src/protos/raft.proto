@@ -28,6 +28,7 @@ message AppendEntriesArgs {
     int32 prevLogIndex = 3;
     int32 prevLogTerm = 4;
     repeated LogEntry entries = 5;
+    int32 leaderCommit = 6;
 }
 message AppendEntriesReply{
     int32 term = 1;

@@ -21,9 +21,10 @@ Raft::Raft(int me, AbstractPersist *persister, co_chan<Command> *applyCh)
     for (int i = 0; i < m_peers_->numPeers(); i++) {
         m_appendEntriesTimers_.emplace_back(new Timer);
     }
-    loadFromPersist();
-    co_launchRpcSevices();
     // todo read from Persister
+
+    //loadFromPersist();
+    co_launchRpcSevices();
 }
 
 void Raft::launch() {
@@ -34,30 +35,29 @@ void Raft::launch() {
 
     sleep(99999999);
 }
-
 void Raft::changeToState(STATE toState) {
     if (toState == STATE::FOLLOWER) {
         if (this->m_state_ != STATE::FOLLOWER) {
             this->m_votedFor_ = -1;
         }
-        this->m_state_ = toState;
     } else if (toState == STATE::CANDIDATE) {
-        this->m_state_ = toState;
         this->m_current_term_++;
         this->m_votedFor_ = this->m_me_;
+        m_electionTimer->reset(getElectionTimeOut(ELECTION_TIMEOUT));
     } else if (toState == STATE::LEADER) {
-        this->m_state_ = toState;
-        this->m_electionTimer->stop();
-        spdlog::debug("changeToState,change to [{}]", stringState(m_state_));
-        *m_StateChangedCh_ << RETURN_TYPE::STATE_CHANGED;
-        return;
         // TODO
+        int lastLogIndex = getLastLogIndex();
+        for (int i = 0; i < m_peers_->numPeers(); i++) {
+            m_nextIndex_[i] = lastLogIndex + 1;
+            m_matchIndex_[i] = lastLogIndex;
+        }
+        m_electionTimer->stop();
+        //m_electionTimer->reset(getElectionTimeOut(ELECTION_TIMEOUT));
     } else {
-        this->m_state_ = toState;
-        spdlog::error("unkown toState");
+        spdlog::critical("change to unkown toState");
     }
-    spdlog::debug("end of changeToState,change to [{}]", stringState(m_state_));
-    this->m_electionTimer->reset(getElectionTimeOut(ELECTION_TIMEOUT));
+    m_state_ = toState;
+    spdlog::debug("changeToState,change to [{}]", stringState(m_state_));
     *m_StateChangedCh_ << RETURN_TYPE::STATE_CHANGED;
 }
 
@@ -110,25 +110,33 @@ void Raft::loadFromPersist() {
     // m_lastApplied_ = m_persister_->getLastLogIndex();
     m_current_term_ = m_persister_->getCurrentTerm();
     m_commitIndex_ = m_persister_->getCommitIndex();
-    m_snopShotIndex = m_persister_->getLastSnapshotIndex();
-    m_snopShotTerm = m_persister_->getLastSnapshotTerm();
+    m_snapShotIndex = m_persister_->getLastSnapshotIndex();
+    m_snapShotTerm = m_persister_->getLastSnapshotTerm();
 
     auto logEntries = m_persister_->getLogEntries();
-    for (int i = 0; i < logEntries.size(); i++) {
+    for (auto & logEntrie : logEntries) {
         auto log = LogEntry().New();
-        log->set_term(logEntries[i].first);
-        log->set_command(logEntries[i].second);
+        log->set_term(logEntrie.first);
+        log->set_command(logEntrie.second);
         m_logs_.push_back(*log);
     }
     spdlog::info(" load from success.");
     spdlog::info("m_votedFor_ = [{}]", m_votedFor_);
     spdlog::info("m_current_term_ = [{}]", m_current_term_);
     spdlog::info("m_commitIndex_ = [{}]", m_commitIndex_);
-    spdlog::info("m_snopShotIndex = [{}]", m_snopShotIndex);
-    spdlog::info("m_snopShotTerm = [{}]", m_snopShotTerm);
+    spdlog::info("m_snopShotIndex = [{}]", m_snapShotIndex);
+    spdlog::info("m_snopShotTerm = [{}]", m_snapShotTerm);
     for (const auto &i : m_logs_) {
         spdlog::info("logs term = {},command = {}", i.term(), i.command());
     }
 }
+    int Raft::getLastLogTerm() const {
+        return m_logs_[m_logs_.size() - 1].term();
+    }
+    int Raft::getLastLogIndex() const {
+        return m_snapShotIndex+m_logs_.size() - 1;
+    }
+
+
 
 }  // namespace craft

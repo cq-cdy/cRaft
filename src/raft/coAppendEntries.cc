@@ -33,17 +33,23 @@ namespace craft {
                             sendToAppendEntries(this, i, args, reply);
                             *successChan << reply->success();
                             if(reply->success()){
-                                m_electionTimer->reset(getElectionTimeOut(ELECTION_TIMEOUT));
+                                //m_electionTimer->reset(getElectionTimeOut(ELECTION_TIMEOUT));
                             }
                             co_mtx_.lock();
-                            if (m_state_ == STATE::LEADER) {
-                                if (reply->term() > m_current_term_ &&
-                                    m_state_ != STATE::FOLLOWER) {
-                                    m_current_term_ = reply->term();
-                                    changeToState(STATE::FOLLOWER);
-                                }
+                            if (reply->term() > m_current_term_ ) {
+                                m_current_term_ = reply->term();
+                                changeToState(STATE::FOLLOWER);
+                                m_electionTimer->reset(getElectionTimeOut(ELECTION_TIMEOUT));
                             }
                             co_mtx_.unlock();
+
+//                            if (m_state_ == STATE::LEADER) {
+//                                if (reply->term() > m_current_term_ &&
+//                                    m_state_ != STATE::FOLLOWER) {
+//                                    m_current_term_ = reply->term();
+//                                    changeToState(STATE::FOLLOWER);
+//                                }
+//                            }
                         };
                     }
 

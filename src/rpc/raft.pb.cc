@@ -63,7 +63,8 @@ constexpr AppendEntriesArgs::AppendEntriesArgs(
   , term_(0)
   , leaderid_(0)
   , prevlogindex_(0)
-  , prevlogterm_(0){}
+  , prevlogterm_(0)
+  , leadercommit_(0){}
 struct AppendEntriesArgsDefaultTypeInternal {
   constexpr AppendEntriesArgsDefaultTypeInternal()
     : _instance(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized{}) {}
@@ -156,6 +157,7 @@ const uint32_t TableStruct_raft_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(pro
   PROTOBUF_FIELD_OFFSET(::AppendEntriesArgs, prevlogindex_),
   PROTOBUF_FIELD_OFFSET(::AppendEntriesArgs, prevlogterm_),
   PROTOBUF_FIELD_OFFSET(::AppendEntriesArgs, entries_),
+  PROTOBUF_FIELD_OFFSET(::AppendEntriesArgs, leadercommit_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::AppendEntriesReply, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -188,9 +190,9 @@ static const ::PROTOBUF_NAMESPACE_ID::internal::MigrationSchema schemas[] PROTOB
   { 10, -1, -1, sizeof(::RequestVoteReply)},
   { 18, -1, -1, sizeof(::LogEntry)},
   { 26, -1, -1, sizeof(::AppendEntriesArgs)},
-  { 37, -1, -1, sizeof(::AppendEntriesReply)},
-  { 47, -1, -1, sizeof(::ResultPackge)},
-  { 56, -1, -1, sizeof(::Command)},
+  { 38, -1, -1, sizeof(::AppendEntriesReply)},
+  { 48, -1, -1, sizeof(::ResultPackge)},
+  { 57, -1, -1, sizeof(::Command)},
 };
 
 static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] = {
@@ -209,23 +211,24 @@ const char descriptor_table_protodef_raft_2eproto[] PROTOBUF_SECTION_VARIABLE(pr
   "ex\030\003 \001(\005\022\023\n\013lastLogTerm\030\004 \001(\005\"5\n\020Request"
   "VoteReply\022\014\n\004term\030\001 \001(\005\022\023\n\013voteGranted\030\002"
   " \001(\010\")\n\010LogEntry\022\014\n\004term\030\001 \001(\005\022\017\n\007comman"
-  "d\030\002 \001(\t\"z\n\021AppendEntriesArgs\022\014\n\004term\030\001 \001"
-  "(\005\022\020\n\010leaderId\030\002 \001(\005\022\024\n\014prevLogIndex\030\003 \001"
-  "(\005\022\023\n\013prevLogTerm\030\004 \001(\005\022\032\n\007entries\030\005 \003(\013"
-  "2\t.LogEntry\"^\n\022AppendEntriesReply\022\014\n\004ter"
-  "m\030\001 \001(\005\022\017\n\007success\030\002 \001(\010\022\023\n\013nextLogTerm\030"
-  "\003 \001(\005\022\024\n\014nextLogIndex\030\004 \001(\005\"=\n\014ResultPac"
-  "kge\022\r\n\005index\030\001 \001(\005\022\014\n\004term\030\002 \001(\005\022\020\n\010isLe"
-  "ader\030\003 \001(\010\"\032\n\007Command\022\017\n\007content\030\001 \001(\t2\252"
-  "\001\n\007RaftRPC\022*\n\rsubmitCommand\022\010.Command\032\r."
-  "ResultPackge\"\000\0227\n\016requestVoteRPC\022\020.Reque"
-  "stVoteArgs\032\021.RequestVoteReply\"\000\022:\n\rappen"
-  "dEntries\022\022.AppendEntriesArgs\032\023.AppendEnt"
-  "riesReply\"\000b\006proto3"
+  "d\030\002 \001(\t\"\220\001\n\021AppendEntriesArgs\022\014\n\004term\030\001 "
+  "\001(\005\022\020\n\010leaderId\030\002 \001(\005\022\024\n\014prevLogIndex\030\003 "
+  "\001(\005\022\023\n\013prevLogTerm\030\004 \001(\005\022\032\n\007entries\030\005 \003("
+  "\0132\t.LogEntry\022\024\n\014leaderCommit\030\006 \001(\005\"^\n\022Ap"
+  "pendEntriesReply\022\014\n\004term\030\001 \001(\005\022\017\n\007succes"
+  "s\030\002 \001(\010\022\023\n\013nextLogTerm\030\003 \001(\005\022\024\n\014nextLogI"
+  "ndex\030\004 \001(\005\"=\n\014ResultPackge\022\r\n\005index\030\001 \001("
+  "\005\022\014\n\004term\030\002 \001(\005\022\020\n\010isLeader\030\003 \001(\010\"\032\n\007Com"
+  "mand\022\017\n\007content\030\001 \001(\t2\252\001\n\007RaftRPC\022*\n\rsub"
+  "mitCommand\022\010.Command\032\r.ResultPackge\"\000\0227\n"
+  "\016requestVoteRPC\022\020.RequestVoteArgs\032\021.Requ"
+  "estVoteReply\"\000\022:\n\rappendEntries\022\022.Append"
+  "EntriesArgs\032\023.AppendEntriesReply\"\000b\006prot"
+  "o3"
   ;
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_raft_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_raft_2eproto = {
-  false, false, 699, descriptor_table_protodef_raft_2eproto, "raft.proto", 
+  false, false, 722, descriptor_table_protodef_raft_2eproto, "raft.proto", 
   &descriptor_table_raft_2eproto_once, nullptr, 0, 7,
   schemas, file_default_instances, TableStruct_raft_2eproto::offsets,
   file_level_metadata_raft_2eproto, file_level_enum_descriptors_raft_2eproto, file_level_service_descriptors_raft_2eproto,
@@ -955,16 +958,16 @@ AppendEntriesArgs::AppendEntriesArgs(const AppendEntriesArgs& from)
       entries_(from.entries_) {
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
   ::memcpy(&term_, &from.term_,
-    static_cast<size_t>(reinterpret_cast<char*>(&prevlogterm_) -
-    reinterpret_cast<char*>(&term_)) + sizeof(prevlogterm_));
+    static_cast<size_t>(reinterpret_cast<char*>(&leadercommit_) -
+    reinterpret_cast<char*>(&term_)) + sizeof(leadercommit_));
   // @@protoc_insertion_point(copy_constructor:AppendEntriesArgs)
 }
 
 inline void AppendEntriesArgs::SharedCtor() {
 ::memset(reinterpret_cast<char*>(this) + static_cast<size_t>(
     reinterpret_cast<char*>(&term_) - reinterpret_cast<char*>(this)),
-    0, static_cast<size_t>(reinterpret_cast<char*>(&prevlogterm_) -
-    reinterpret_cast<char*>(&term_)) + sizeof(prevlogterm_));
+    0, static_cast<size_t>(reinterpret_cast<char*>(&leadercommit_) -
+    reinterpret_cast<char*>(&term_)) + sizeof(leadercommit_));
 }
 
 AppendEntriesArgs::~AppendEntriesArgs() {
@@ -996,8 +999,8 @@ void AppendEntriesArgs::Clear() {
 
   entries_.Clear();
   ::memset(&term_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&prevlogterm_) -
-      reinterpret_cast<char*>(&term_)) + sizeof(prevlogterm_));
+      reinterpret_cast<char*>(&leadercommit_) -
+      reinterpret_cast<char*>(&term_)) + sizeof(leadercommit_));
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -1049,6 +1052,14 @@ const char* AppendEntriesArgs::_InternalParse(const char* ptr, ::PROTOBUF_NAMESP
             CHK_(ptr);
             if (!ctx->DataAvailable(ptr)) break;
           } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<42>(ptr));
+        } else
+          goto handle_unusual;
+        continue;
+      // int32 leaderCommit = 6;
+      case 6:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 48)) {
+          leadercommit_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
         } else
           goto handle_unusual;
         continue;
@@ -1113,6 +1124,12 @@ uint8_t* AppendEntriesArgs::_InternalSerialize(
       InternalWriteMessage(5, this->_internal_entries(i), target, stream);
   }
 
+  // int32 leaderCommit = 6;
+  if (this->_internal_leadercommit() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt32ToArray(6, this->_internal_leadercommit(), target);
+  }
+
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
         _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
@@ -1156,6 +1173,11 @@ size_t AppendEntriesArgs::ByteSizeLong() const {
     total_size += ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32SizePlusOne(this->_internal_prevlogterm());
   }
 
+  // int32 leaderCommit = 6;
+  if (this->_internal_leadercommit() != 0) {
+    total_size += ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32SizePlusOne(this->_internal_leadercommit());
+  }
+
   return MaybeComputeUnknownFieldsSize(total_size, &_cached_size_);
 }
 
@@ -1191,6 +1213,9 @@ void AppendEntriesArgs::MergeFrom(const AppendEntriesArgs& from) {
   if (from._internal_prevlogterm() != 0) {
     _internal_set_prevlogterm(from._internal_prevlogterm());
   }
+  if (from._internal_leadercommit() != 0) {
+    _internal_set_leadercommit(from._internal_leadercommit());
+  }
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
@@ -1210,8 +1235,8 @@ void AppendEntriesArgs::InternalSwap(AppendEntriesArgs* other) {
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
   entries_.InternalSwap(&other->entries_);
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(AppendEntriesArgs, prevlogterm_)
-      + sizeof(AppendEntriesArgs::prevlogterm_)
+      PROTOBUF_FIELD_OFFSET(AppendEntriesArgs, leadercommit_)
+      + sizeof(AppendEntriesArgs::leadercommit_)
       - PROTOBUF_FIELD_OFFSET(AppendEntriesArgs, term_)>(
           reinterpret_cast<char*>(&term_),
           reinterpret_cast<char*>(&other->term_));

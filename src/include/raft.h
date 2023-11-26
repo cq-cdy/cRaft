@@ -38,6 +38,12 @@ namespace craft {
 
         void changeToState(STATE toState) ;
 
+
+        //some util function
+
+        int getLastLogIndex() const ;
+
+        int getLastLogTerm() const ;
         // use to debug
         std::string stringState(STATE state);
 
@@ -50,19 +56,21 @@ namespace craft {
         int m_votedFor_ = -1;
         int m_commitIndex_ = 0;
         int m_lastApplied_ = 0;
-        int m_snopShotIndex = 0;
-        int m_snopShotTerm = 0;
+        int m_snapShotIndex = 0;
+        int m_snapShotTerm = 0;
         bool m_iskilled_ = false;
         std::vector<int> m_nextIndex;
         std::vector<int> m_matchIndex;
 
     public:
 
-        std::vector<LogEntry> m_logs_;
+
+       std::vector<LogEntry> m_logs_{LogEntry()};
         co_mutex co_mtx_;
         co_chan<Command> *m_applyCh_ = nullptr;
         co_chan<void *> *m_notifyApplyCh_ = nullptr;
         co_chan<RETURN_TYPE> *m_StateChangedCh_ = nullptr;
+
         co_chan<void *> *m_stopCh_ = nullptr;
 
         RpcClients *m_peers_ = nullptr;

@@ -13,8 +13,8 @@
 
 using uint = unsigned int;
 
-const uint ELECTION_TIMEOUT = 1500;  // ms
-const uint RPC_TIMEOUT = 200;       // ms
+const uint ELECTION_TIMEOUT = 1000;  // ms
+const uint RPC_TIMEOUT = 150;       // ms
 const uint HEART_BEAT_TIMEOUT = 300; //ms
 
 
@@ -31,7 +31,7 @@ enum class RETURN_TYPE {
     STATE_CHANGED,
 };
 static std::vector<std::string> peersAddr = {
-        "127.0.0.1:9100", "127.0.0.1:9101", "127.0.0.1:9102", "127.0.0.1:51003", "127.0.0.1:21704"
+        "127.0.0.1:29870", "127.0.0.1:28335", "127.0.0.1:27832", "127.0.0.1:21003", "127.0.0.1:21704"
 };
 struct Command_ {
 };

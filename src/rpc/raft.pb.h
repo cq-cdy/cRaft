@@ -711,6 +711,7 @@ class AppendEntriesArgs final :
     kLeaderIdFieldNumber = 2,
     kPrevLogIndexFieldNumber = 3,
     kPrevLogTermFieldNumber = 4,
+    kLeaderCommitFieldNumber = 6,
   };
   // repeated .LogEntry entries = 5;
   int entries_size() const;
@@ -766,6 +767,15 @@ class AppendEntriesArgs final :
   void _internal_set_prevlogterm(int32_t value);
   public:
 
+  // int32 leaderCommit = 6;
+  void clear_leadercommit();
+  int32_t leadercommit() const;
+  void set_leadercommit(int32_t value);
+  private:
+  int32_t _internal_leadercommit() const;
+  void _internal_set_leadercommit(int32_t value);
+  public:
+
   // @@protoc_insertion_point(class_scope:AppendEntriesArgs)
  private:
   class _Internal;
@@ -778,6 +788,7 @@ class AppendEntriesArgs final :
   int32_t leaderid_;
   int32_t prevlogindex_;
   int32_t prevlogterm_;
+  int32_t leadercommit_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_raft_2eproto;
 };
@@ -1611,6 +1622,26 @@ inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::LogEntry >&
 AppendEntriesArgs::entries() const {
   // @@protoc_insertion_point(field_list:AppendEntriesArgs.entries)
   return entries_;
+}
+
+// int32 leaderCommit = 6;
+inline void AppendEntriesArgs::clear_leadercommit() {
+  leadercommit_ = 0;
+}
+inline int32_t AppendEntriesArgs::_internal_leadercommit() const {
+  return leadercommit_;
+}
+inline int32_t AppendEntriesArgs::leadercommit() const {
+  // @@protoc_insertion_point(field_get:AppendEntriesArgs.leaderCommit)
+  return _internal_leadercommit();
+}
+inline void AppendEntriesArgs::_internal_set_leadercommit(int32_t value) {
+  
+  leadercommit_ = value;
+}
+inline void AppendEntriesArgs::set_leadercommit(int32_t value) {
+  _internal_set_leadercommit(value);
+  // @@protoc_insertion_point(field_set:AppendEntriesArgs.leaderCommit)
 }
 
 // -------------------------------------------------------------------
