@@ -22,6 +22,9 @@ class RpcServiceImpl : public RaftRPC::Service {
                          const ::AppendEntriesArgs *request,
                          ::AppendEntriesReply *response) override;
 
+    Status submitCommand(::grpc::ServerContext *context,
+                         const ::Command *request,
+                         ::ResultPackge *response) override;
 
     void publishRpcService();
 

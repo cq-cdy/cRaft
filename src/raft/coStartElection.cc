@@ -93,7 +93,8 @@ namespace craft {
                         grantedCount, rf->m_current_term_, rf->m_current_term_);
                 rf->changeToState(STATE::LEADER);
             } else {
-                spdlog::debug("grant faild,state ={}", rf->stringState(rf->m_state_));
+                rf->changeToState(STATE::FOLLOWER);
+                spdlog::info("grant faild,state ={}", rf->stringState(rf->m_state_));
             }
             rf->co_mtx_.unlock();
 

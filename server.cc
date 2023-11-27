@@ -43,24 +43,14 @@ int main(int argc, char **argv) {
         std::cerr << "在路径中未找到序号。" << std::endl;
         abs_path = "/home/cdy/code/projects/cRaft/.data";
     }
-    spdlog::set_level(spdlog::level::debug); // 设置日志级别为 debug
+    spdlog::set_level(spdlog::level::info); // 设置日志级别为 debug
     spdlog::info("get persist path [{}]",abs_path);
     std::thread t([] { co_sched.Start(8, 1024); });
     t.detach();
     KVServer kv(abs_path);
     craft::Raft raft(me, &kv, nullptr);
     raft.launch();
-    while(true){
-        sleep(2);
-        Command_ command;
 
-        command.content = "{""option"":""Add"",""Id"":""2022068085404030"",""Name"":""Cdy""}";
-        auto pack = raft.submitCommand(command);
-        if(pack.isLeader){
-            spdlog::info("user submit log success");
-        }else{
-            spdlog::info("user submit log error");
-        }
-    }
+//    }
     return 0;
 }

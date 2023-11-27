@@ -34,14 +34,14 @@ namespace craft {
         co_startElection();
         co_applyLogs();
 
-        //sleep(99999999);
+        sleep(99999999);
     }
 
     void Raft::changeToState(STATE toState) {
         if (toState == STATE::FOLLOWER) {
-            if (this->m_state_ != STATE::FOLLOWER) {
-                this->m_votedFor_ = -1;
-            }
+//            if (this->m_state_ != STATE::FOLLOWER) {
+//                this->m_votedFor_ = -1;
+//            }
             m_appendEntriesTimer->stop();
         } else if (toState == STATE::CANDIDATE) {
             this->m_current_term_++;
@@ -61,7 +61,7 @@ namespace craft {
         }
         m_state_ = toState;
         spdlog::debug("changeToState,change to [{}]", stringState(m_state_));
-        if(m_StateChangedCh_->empty()){
+        if (m_StateChangedCh_->empty()) {
             *m_StateChangedCh_ << RETURN_TYPE::STATE_CHANGED;
         }
     }
@@ -145,30 +145,83 @@ namespace craft {
         return m_snapShotIndex + m_logs_.size() - 1;
     }
 
-    ResultPackge Raft::submitCommand(Command_ command) {
-        int term, index;
-        while (co_mtx_.try_lock()) {
-            if (m_state_ != STATE::LEADER) {
-                co_mtx_.unlock();
-                return ResultPackge{-1, -1, false};
-            }
-            spdlog::info("[{}] receive command:[{}]", m_me_, command.content);
-            LogEntry log;
-            log.set_term(m_current_term_);
-            log.set_command(log.command());
-            m_logs_.push_back(log);
-            index = getLastLogIndex();
-            term = m_current_term_;
-            m_matchIndex_[m_me_] = index;
-            m_nextIndex_[m_me_] = index + 1;
-            m_appendEntriesTimer->reset(0);
-        }
-        go[this]{
-            co_sleep(50);
-            m_appendEntriesTimer->reset(HEART_BEAT_INTERVAL);
-        };
-        co_mtx_.unlock();
+    bool Raft::isOutOfArgsAppendEntries(const ::AppendEntriesArgs *args) const {
+        int argsLastLogIndex = args->prevlogindex() + args->entries_size();
+        int lastLogIndex = getLastLogIndex();
+        int lastLogTerm = getLastLogTerm();
 
-        return ResultPackge{index, term, true};
+        if (lastLogTerm == args->term() && argsLastLogIndex < lastLogIndex) {
+            return true;
+        }
+        return false;
+    }
+
+    int Raft::getStoreIndexByLogIndex(int logIndex) {
+        int storeIndex = logIndex - m_snapShotIndex;
+        if (storeIndex < 0) {
+            spdlog::error("getStoreIndexByLogIndex error,logIndex = [{}],m_snapShotIndex = [{}]", logIndex,
+                          m_snapShotIndex);
+            return -1;
+        }
+        return storeIndex;
+    }
+
+    void Raft::tryCommitLog() {
+        int lastLogIndex = getLastLogIndex();
+        bool hasCommit = false;
+        for (int i = m_commitIndex_ + 1; i <= lastLogIndex; i++) {
+            int count = 0;
+            for (int j = 0; j < m_peers_->numPeers(); j++) {
+                if (m_matchIndex_[j] >= i) {
+                    count++;
+                    if (count > m_peers_->numPeers() / 2) {
+                        m_commitIndex_ = i;
+                        hasCommit = true;
+                        spdlog::info("commit log index = [{}]", i);
+                        break;
+                    }
+                }
+            }
+            if (m_commitIndex_ != i) {
+                break;
+            }
+        }
+        if (hasCommit) {
+            *m_notifyApplyCh_ << (void *) 1;
+        }
+    }
+
+    Raft::ArgsPack Raft::getAppendLogs(int peerId) {
+        int nextIndex = m_nextIndex_[peerId];
+        int lastLogIndex = getLastLogIndex();
+        int lastLogTerm = getLastLogTerm();
+
+        if (nextIndex <= m_snapShotIndex || nextIndex > lastLogIndex) {
+//            spdlog::error("getAppendLogs error,nextIndex = [{}],m_snapShotIndex = [{}],lastLogIndex=[{}]", nextIndex,
+//                          m_snapShotIndex,lastLogIndex);
+            return ArgsPack{lastLogIndex, lastLogTerm, {}};
+        }
+        ArgsPack argsPack;
+        //这里一定要进行深拷贝，不然会和Snapshot()发生数据上的冲突
+        //logEntries = rf.logs[nextIndex-rf.lastSnapshotIndex:]
+        //-
+        int size = lastLogIndex - nextIndex + 1;
+        std::vector<LogEntry> entries(size);
+        int start = nextIndex - m_snapShotIndex;
+        int end = std::min(static_cast<int>(m_logs_.size()), start + size);
+        for (int i = start, j = 0; i < end; i++, j++) {
+            entries[j] = m_logs_[i];
+        }
+        argsPack.logEntries = entries;
+        //-
+
+        argsPack.prevLogIndex = nextIndex - 1;
+        if (argsPack.prevLogIndex == m_snapShotIndex) {
+            argsPack.prevLogTerm = m_snapShotTerm;
+        } else {
+            argsPack.prevLogTerm = m_logs_[argsPack.prevLogIndex - m_snapShotIndex].term();
+        }
+        return argsPack;
+
     }
 }  // namespace craft

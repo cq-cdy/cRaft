@@ -21,6 +21,7 @@
 #include <grpcpp/impl/codegen/sync_stream.h>
 
 static const char* RaftRPC_method_names[] = {
+  "/RaftRPC/submitCommand",
   "/RaftRPC/requestVoteRPC",
   "/RaftRPC/appendEntries",
 };
@@ -32,9 +33,33 @@ std::unique_ptr< RaftRPC::Stub> RaftRPC::NewStub(const std::shared_ptr< ::grpc::
 }
 
 RaftRPC::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options)
-  : channel_(channel), rpcmethod_requestVoteRPC_(RaftRPC_method_names[0], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_appendEntries_(RaftRPC_method_names[1], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  : channel_(channel), rpcmethod_submitCommand_(RaftRPC_method_names[0], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_requestVoteRPC_(RaftRPC_method_names[1], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_appendEntries_(RaftRPC_method_names[2], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   {}
+
+::grpc::Status RaftRPC::Stub::submitCommand(::grpc::ClientContext* context, const ::Command& request, ::ResultPackge* response) {
+  return ::grpc::internal::BlockingUnaryCall< ::Command, ::ResultPackge, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_submitCommand_, context, request, response);
+}
+
+void RaftRPC::Stub::async::submitCommand(::grpc::ClientContext* context, const ::Command* request, ::ResultPackge* response, std::function<void(::grpc::Status)> f) {
+  ::grpc::internal::CallbackUnaryCall< ::Command, ::ResultPackge, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_submitCommand_, context, request, response, std::move(f));
+}
+
+void RaftRPC::Stub::async::submitCommand(::grpc::ClientContext* context, const ::Command* request, ::ResultPackge* response, ::grpc::ClientUnaryReactor* reactor) {
+  ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_submitCommand_, context, request, response, reactor);
+}
+
+::grpc::ClientAsyncResponseReader< ::ResultPackge>* RaftRPC::Stub::PrepareAsyncsubmitCommandRaw(::grpc::ClientContext* context, const ::Command& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderHelper::Create< ::ResultPackge, ::Command, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), cq, rpcmethod_submitCommand_, context, request);
+}
+
+::grpc::ClientAsyncResponseReader< ::ResultPackge>* RaftRPC::Stub::AsyncsubmitCommandRaw(::grpc::ClientContext* context, const ::Command& request, ::grpc::CompletionQueue* cq) {
+  auto* result =
+    this->PrepareAsyncsubmitCommandRaw(context, request, cq);
+  result->StartCall();
+  return result;
+}
 
 ::grpc::Status RaftRPC::Stub::requestVoteRPC(::grpc::ClientContext* context, const ::RequestVoteArgs& request, ::RequestVoteReply* response) {
   return ::grpc::internal::BlockingUnaryCall< ::RequestVoteArgs, ::RequestVoteReply, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_requestVoteRPC_, context, request, response);
@@ -86,6 +111,16 @@ RaftRPC::Service::Service() {
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       RaftRPC_method_names[0],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
+      new ::grpc::internal::RpcMethodHandler< RaftRPC::Service, ::Command, ::ResultPackge, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
+          [](RaftRPC::Service* service,
+             ::grpc::ServerContext* ctx,
+             const ::Command* req,
+             ::ResultPackge* resp) {
+               return service->submitCommand(ctx, req, resp);
+             }, this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      RaftRPC_method_names[1],
+      ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< RaftRPC::Service, ::RequestVoteArgs, ::RequestVoteReply, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
           [](RaftRPC::Service* service,
              ::grpc::ServerContext* ctx,
@@ -94,7 +129,7 @@ RaftRPC::Service::Service() {
                return service->requestVoteRPC(ctx, req, resp);
              }, this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
-      RaftRPC_method_names[1],
+      RaftRPC_method_names[2],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< RaftRPC::Service, ::AppendEntriesArgs, ::AppendEntriesReply, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
           [](RaftRPC::Service* service,
@@ -106,6 +141,13 @@ RaftRPC::Service::Service() {
 }
 
 RaftRPC::Service::~Service() {
+}
+
+::grpc::Status RaftRPC::Service::submitCommand(::grpc::ServerContext* context, const ::Command* request, ::ResultPackge* response) {
+  (void) context;
+  (void) request;
+  (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
 }
 
 ::grpc::Status RaftRPC::Service::requestVoteRPC(::grpc::ServerContext* context, const ::RequestVoteArgs* request, ::RequestVoteReply* response) {

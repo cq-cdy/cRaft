@@ -49,7 +49,17 @@ namespace craft {
 
         ResultPackge submitCommand(Command_ command);
 
-
+    public:
+        //some util function
+        bool isOutOfArgsAppendEntries(const ::AppendEntriesArgs *args) const;
+        int getStoreIndexByLogIndex(int logIndex);
+        void tryCommitLog();
+        struct ArgsPack{
+            int prevLogIndex;
+            int prevLogTerm;
+            std::vector<LogEntry> logEntries;
+        };
+        ArgsPack getAppendLogs(int peerId);
 
     public:
 
@@ -62,12 +72,13 @@ namespace craft {
         int m_snapShotTerm = 0;
         bool m_iskilled_ = false;
         std::vector<int> m_nextIndex;
-        std::vector<int> m_matchIndex;
+
+
 
     public:
 
 
-       std::vector<LogEntry> m_logs_{LogEntry()};
+        std::vector<LogEntry> m_logs_{LogEntry()};
         co_mutex co_mtx_;
         co_chan<Command_> *m_applyCh_ = nullptr;
         co_chan<void *> *m_notifyApplyCh_ = nullptr;

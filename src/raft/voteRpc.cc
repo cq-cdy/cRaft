@@ -36,7 +36,7 @@ namespace craft {
                 }
             } else { // peerTerm > m_rf_->m_current_term_
                 m_rf_->m_current_term_ = peerTerm;
-                if (checkLog(m_rf_, request) ) {
+                if (!checkLog(m_rf_, request) ) {
                     m_rf_->changeToState(STATE::FOLLOWER);
                     m_rf_->m_votedFor_ = request->candidateid();
                     response->set_votegranted(true);
@@ -59,7 +59,7 @@ namespace craft {
         int lastLogIndex = rf->getLastLogIndex();
         int lastLogTerm = rf->getLastLogTerm();
         return (lastLogTerm > request->lastlogterm() ||
-                (lastLogTerm == request->lastlogterm() && lastLogIndex >= request->lastlogindex()));
+                (lastLogTerm == request->lastlogterm() && lastLogIndex > request->lastlogindex()));
 
     }
 
