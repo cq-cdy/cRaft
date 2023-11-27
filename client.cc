@@ -37,24 +37,3 @@ int main(int argc, char** argv) {
 
     return 0;
 }
-// RequestVoteArgs args;
-// RequestVoteReply reply;
-// static auto channel = grpc::CreateChannel(
-//         "127.0.0.1:7000", grpc::InsecureChannelCredentials());
-// static auto stub = RaftRPC::NewStub(channel);
-// printf("start;\n");
-// ClientContext context;
-// while(true) {
-//
-// Status ok = stub->requestVoteRPC(&context, args, &reply);
-//
-// if (ok.ok()) {
-// printf("ok;\n");
-// break;
-//
-// } else {
-// printf("%s\n", ok.error_message().c_str());
-// continue;
-// }
-// }
-// grpc C++ 这是我的客户端代码，为什么我客户端如果先y
