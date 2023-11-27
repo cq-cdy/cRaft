@@ -3,7 +3,7 @@
 #include "public.h"
 
 namespace craft {
-    Raft::Raft(int me, AbstractPersist *persister, co_chan<Command_> *applyCh)
+    Raft::Raft(int me, AbstractPersist *persister, co_chan<ApplyMsg> *applyCh)
             : m_persister_(persister), m_me_(me) {
         m_peers_ = RpcClients::getInstance();
         m_nextIndex_.resize(m_peers_->numPeers());
@@ -33,8 +33,7 @@ namespace craft {
         co_appendAentries();
         co_startElection();
         co_applyLogs();
-
-        sleep(99999999);
+        //sleep(99999999);
     }
 
     void Raft::changeToState(STATE toState) {
@@ -167,6 +166,7 @@ namespace craft {
     }
 
     void Raft::tryCommitLog() {
+        spdlog::info("in tryCommitLog");
         int lastLogIndex = getLastLogIndex();
         bool hasCommit = false;
         for (int i = m_commitIndex_ + 1; i <= lastLogIndex; i++) {
@@ -177,7 +177,7 @@ namespace craft {
                     if (count > m_peers_->numPeers() / 2) {
                         m_commitIndex_ = i;
                         hasCommit = true;
-                        spdlog::info("commit log index = [{}]", i);
+                        spdlog::info("success commit log index = [{}]###################################################", i);
                         break;
                     }
                 }
@@ -191,37 +191,24 @@ namespace craft {
         }
     }
 
-    Raft::ArgsPack Raft::getAppendLogs(int peerId) {
+    std::tuple<int,int,std::vector<LogEntry>> Raft::getAppendLogs(int peerId){
         int nextIndex = m_nextIndex_[peerId];
         int lastLogIndex = getLastLogIndex();
         int lastLogTerm = getLastLogTerm();
-
+        std::vector<LogEntry> logEntries;
         if (nextIndex <= m_snapShotIndex || nextIndex > lastLogIndex) {
-//            spdlog::error("getAppendLogs error,nextIndex = [{}],m_snapShotIndex = [{}],lastLogIndex=[{}]", nextIndex,
-//                          m_snapShotIndex,lastLogIndex);
-            return ArgsPack{lastLogIndex, lastLogTerm, {}};
+            return {lastLogIndex, lastLogTerm, logEntries};
         }
-        ArgsPack argsPack;
-        //这里一定要进行深拷贝，不然会和Snapshot()发生数据上的冲突
-        //logEntries = rf.logs[nextIndex-rf.lastSnapshotIndex:]
-        //-
-        int size = lastLogIndex - nextIndex + 1;
-        std::vector<LogEntry> entries(size);
-        int start = nextIndex - m_snapShotIndex;
-        int end = std::min(static_cast<int>(m_logs_.size()), start + size);
-        for (int i = start, j = 0; i < end; i++, j++) {
-            entries[j] = m_logs_[i];
-        }
-        argsPack.logEntries = entries;
-        //-
-
-        argsPack.prevLogIndex = nextIndex - 1;
-        if (argsPack.prevLogIndex == m_snapShotIndex) {
-            argsPack.prevLogTerm = m_snapShotTerm;
+        logEntries.resize(lastLogIndex - nextIndex + 1);
+        std::copy(this->m_logs_.begin() + (nextIndex - m_snapShotIndex), this->m_logs_.end(), logEntries.begin());
+        int prevLogIndex = nextIndex - 1;
+        int prevLogTerm;
+        if (prevLogIndex == m_snapShotIndex) {
+            prevLogTerm = m_snapShotTerm;
         } else {
-            argsPack.prevLogTerm = m_logs_[argsPack.prevLogIndex - m_snapShotIndex].term();
+            prevLogTerm = this->m_logs_[prevLogIndex - m_snapShotIndex].term();
         }
-        return argsPack;
-
+        return {prevLogIndex, prevLogTerm, logEntries};
     }
+
 }  // namespace craft

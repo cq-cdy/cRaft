@@ -17,13 +17,20 @@ namespace craft {
                 break;
             } else {
                 term = m_rf_->m_current_term_;
-                index = m_rf_->m_lastApplied_;
+                index = m_rf_->getLastLogIndex();
             }
+            //to raft
             LogEntry logEntry;
+            logEntry.set_term(term);
             logEntry.set_command(request->content());
             m_rf_->m_logs_.push_back(logEntry);
+            m_rf_->m_matchIndex_[m_rf_->m_me_] = index;
+            m_rf_->m_nextIndex_[m_rf_->m_me_] = index +1   ;
+
+            //to client
             response->set_term(term);
             response->set_index(index);
+
             spdlog::debug("success submit command [{}]", request->content());
             break;
         }

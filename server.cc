@@ -48,8 +48,14 @@ int main(int argc, char **argv) {
     std::thread t([] { co_sched.Start(8, 1024); });
     t.detach();
     KVServer kv(abs_path);
-    craft::Raft raft(me, &kv, nullptr);
+    co_chan<ApplyMsg> msgCh(100);
+    craft::Raft raft(me, &kv, &msgCh);
     raft.launch();
+    while(true){
+        ApplyMsg msg;
+        msgCh >> msg;
+        spdlog::info("!!!!!! get Apply msg [{}]",msg.command.content);
+    }
 
 //    }
     return 0;

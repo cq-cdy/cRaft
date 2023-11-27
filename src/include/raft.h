@@ -14,7 +14,7 @@ namespace craft {
     class Raft final : public noncopyable {
 
     public:
-        explicit Raft(int me, AbstractPersist *persister, co_chan<Command_> *applyCh) ;
+        explicit Raft(int me, AbstractPersist *persister, co_chan<ApplyMsg> *applyCh) ;
 
         void launch() ;
 
@@ -47,19 +47,13 @@ namespace craft {
         // use to debug
         std::string stringState(STATE state);
 
-        ResultPackge submitCommand(Command_ command);
-
     public:
         //some util function
         bool isOutOfArgsAppendEntries(const ::AppendEntriesArgs *args) const;
         int getStoreIndexByLogIndex(int logIndex);
         void tryCommitLog();
-        struct ArgsPack{
-            int prevLogIndex;
-            int prevLogTerm;
-            std::vector<LogEntry> logEntries;
-        };
-        ArgsPack getAppendLogs(int peerId);
+
+        std::tuple<int,int,std::vector<LogEntry>> getAppendLogs(int peerId);
 
     public:
 
@@ -80,7 +74,7 @@ namespace craft {
 
         std::vector<LogEntry> m_logs_{LogEntry()};
         co_mutex co_mtx_;
-        co_chan<Command_> *m_applyCh_ = nullptr;
+        co_chan<ApplyMsg> *m_applyCh_ = nullptr;
         co_chan<void *> *m_notifyApplyCh_ = nullptr;
         co_chan<RETURN_TYPE> *m_StateChangedCh_ = nullptr;
 
