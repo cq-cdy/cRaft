@@ -1,6 +1,7 @@
 #include "raft.h"
 
 #include "public.h"
+#include "filesystem"
 
 namespace craft {
     Raft::Raft(int me, AbstractPersist *persister, co_chan<ApplyMsg> *applyCh)
@@ -8,10 +9,11 @@ namespace craft {
         m_peers_ = RpcClients::getInstance();
         m_nextIndex_.resize(m_peers_->numPeers());
         m_matchIndex_.resize(m_peers_->numPeers());
+        m_logs_.emplace_back();
 
         /*channels*/
         m_applyCh_ = applyCh;
-        m_notifyApplyCh_ = new co_chan<void *>(100);
+        m_notifyApplyCh_ = new co_chan<void *>(100000);
         m_StateChangedCh_ = new co_chan<RETURN_TYPE>(1);
         m_stopCh_ = new co_chan<void *>(1);
         /* timer */
@@ -19,12 +21,9 @@ namespace craft {
         m_applyTimer = new Timer();
         m_appendEntriesTimer = new Timer();
 
-//        for (int i = 0; i < m_peers_->numPeers(); i++) {
-//            m_appendEntriesTimers_.emplace_back(new Timer);
-//        }
         // todo read from Persister
 
-        //loadFromPersist();
+        loadFromPersist();
         co_launchRpcSevices();
     }
 
@@ -37,10 +36,8 @@ namespace craft {
     }
 
     void Raft::changeToState(STATE toState) {
+        auto fromState = m_state_;
         if (toState == STATE::FOLLOWER) {
-//            if (this->m_state_ != STATE::FOLLOWER) {
-//                this->m_votedFor_ = -1;
-//            }
             m_appendEntriesTimer->stop();
         } else if (toState == STATE::CANDIDATE) {
             this->m_current_term_++;
@@ -59,7 +56,9 @@ namespace craft {
             spdlog::critical("change to unkown toState");
         }
         m_state_ = toState;
-        spdlog::debug("changeToState,change to [{}]", stringState(m_state_));
+
+        spdlog::info("[{}]:{} from {} change to {},term = [{}]", m_me_, peersAddr[m_me_], stringState(fromState),
+                     stringState(toState), m_current_term_);
         if (m_StateChangedCh_->empty()) {
             *m_StateChangedCh_ << RETURN_TYPE::STATE_CHANGED;
         }
@@ -72,8 +71,6 @@ namespace craft {
             ptr = nullptr;
         }
     }
-
-    bool Raft::is_killed() const { return m_iskilled_; }
 
     std::string Raft::stringState(STATE state) {
         std::string a;
@@ -98,12 +95,9 @@ namespace craft {
         deleter(m_persister_);
         deleter(m_electionTimer);
         deleter(m_appendEntriesTimer);
-//        for (auto &ptr: m_appendEntriesTimers_) {
-//            deleter(ptr);
-//        }
+
     }
 
-    void Raft::persist() {}
 
     void Raft::loadFromPersist() {
         spdlog::info("start load from persist.");
@@ -125,14 +119,14 @@ namespace craft {
             log->set_command(logEntrie.second);
             m_logs_.push_back(*log);
         }
-        spdlog::info(" load from success.");
+        spdlog::info("load from persist success.");
         spdlog::info("m_votedFor_ = [{}]", m_votedFor_);
         spdlog::info("m_current_term_ = [{}]", m_current_term_);
         spdlog::info("m_commitIndex_ = [{}]", m_commitIndex_);
         spdlog::info("m_snopShotIndex = [{}]", m_snapShotIndex);
         spdlog::info("m_snopShotTerm = [{}]", m_snapShotTerm);
         for (const auto &i: m_logs_) {
-            spdlog::info("logs term = {},command = {}", i.term(), i.command());
+            spdlog::debug("logs term = {},command = {}", i.term(), i.command());
         }
     }
 
@@ -166,7 +160,6 @@ namespace craft {
     }
 
     void Raft::tryCommitLog() {
-        spdlog::info("in tryCommitLog");
         int lastLogIndex = getLastLogIndex();
         bool hasCommit = false;
         for (int i = m_commitIndex_ + 1; i <= lastLogIndex; i++) {
@@ -177,7 +170,7 @@ namespace craft {
                     if (count > m_peers_->numPeers() / 2) {
                         m_commitIndex_ = i;
                         hasCommit = true;
-                        spdlog::info("success commit log index = [{}]###################################################", i);
+                        spdlog::info("[{}]:{},success commit log index = [{}]", m_me_, peersAddr[m_me_], i);
                         break;
                     }
                 }
@@ -191,7 +184,7 @@ namespace craft {
         }
     }
 
-    std::tuple<int,int,std::vector<LogEntry>> Raft::getAppendLogs(int peerId){
+    std::tuple<int, int, std::vector<LogEntry>> Raft::getAppendLogs(int peerId) {
         int nextIndex = m_nextIndex_[peerId];
         int lastLogIndex = getLastLogIndex();
         int lastLogTerm = getLastLogTerm();
@@ -209,6 +202,97 @@ namespace craft {
             prevLogTerm = this->m_logs_[prevLogIndex - m_snapShotIndex].term();
         }
         return {prevLogIndex, prevLogTerm, logEntries};
+    }
+
+
+    void check(const std::filesystem::path &dir) {
+        if (!std::filesystem::exists(dir.parent_path())) {
+            std::filesystem::create_directories(dir.parent_path());
+            spdlog::info("success create path:[{}]", dir.parent_path().string());
+        }
+        if (!std::filesystem::exists(dir)) {
+            std::ofstream ofs(dir);
+            if (ofs) {
+                spdlog::info("success create file:[{}]", dir.string());
+            } else {
+                spdlog::error("error create file:[{}]", dir.string());
+                exit(2);
+            }
+        }
+    }
+
+    void writePersist(std::string fileName, int singleValue) {
+        std::ofstream stream;
+        stream.open(fileName, std::ios::out);
+
+        if (!stream) {
+            spdlog::error("can not open file [{}]", fileName);
+        } else {
+            stream << singleValue;
+        }
+        stream.close();
+    }
+
+    void writePersist(std::string logtermFile, std::string logcommandFile, const std::vector<LogEntry>& logs) {
+        {
+            // 清空文件
+            std::ofstream logtermStream;
+            std::ofstream logcommandStream;
+            if (!logtermStream) {
+                spdlog::error("can not open file [{}]", logtermFile);
+                return;
+            }
+            if (!logcommandStream) {
+                spdlog::error("can not open file [{}]", logcommandFile);
+                return;
+            }
+            logtermStream.open(logtermFile, std::ios::out | std::ios::trunc);
+            logcommandStream.open(logcommandFile, std::ios::out | std::ios::trunc);
+            logtermStream.close();
+            logcommandStream.close();
+        }
+        std::ofstream logtermStream;
+        std::ofstream logcommandStream;
+        logtermStream.open(logtermFile,std::ios::out);
+        logcommandStream.open(logcommandFile,std::ios::out);;
+        if(!logtermStream){
+            spdlog::error("can not open file [{}]",logtermFile);
+        }
+        if(!logcommandStream){
+            spdlog::error("can not open file [{}]",logcommandFile);
+        }
+        for(auto i = 1; i < logs.size(); i++){
+            logtermStream << logs[i].term() << std::endl;
+            logcommandStream << logs[i].command() << std::endl;
+        }
+        logtermStream.close();
+        logcommandStream.close();
+    }
+
+   static std::vector<std::string> all_persist_files = {"commitIndex.data", "currentTerm.data", "lastlogindex.data",
+                                                  "lastSnapshotIndex.data", "lastSnapshotTerm.data",
+                                                  "logentry.command.data", "logentry.term.data", "votefor.data"};
+    void Raft::persist() {
+        /*
+            {"commitIndex.data", "currentTerm.data", "lastlogindex.data",
+           "lastSnapshotIndex.data", "lastSnapshotTerm.data",
+          "logentry.command.data", "logentry.term.data", "votefor.data"};
+         */
+        go[this]{
+            std::filesystem::path dir = std::filesystem::path(m_persister_->absPersistPath_)/"persist";
+            for (const auto &file: all_persist_files) {
+                check(dir / file);
+            }
+            writePersist(dir/"commitIndex.data", m_commitIndex_);
+            writePersist(dir/"currentTerm.data", m_current_term_);
+            writePersist(dir/"lastlogindex.data", getLastLogIndex());
+            writePersist(dir/"lastSnapshotIndex.data", m_snapShotIndex);
+            writePersist(dir/"lastSnapshotTerm.data", m_snapShotTerm);
+            writePersist(dir/"votefor.data", m_votedFor_);
+            writePersist(dir/"logentry.term.data", dir/"logentry.command.data", m_logs_);
+        };
+
+
     }
 
 }  // namespace craft

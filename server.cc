@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
     while(true){
         ApplyMsg msg;
         msgCh >> msg;
-        spdlog::info("!!!!!! get Apply msg [{}]",msg.command.content);
+        spdlog::info("!!!!!! get Apply msg [{},{},{}]",msg.commandValid,msg.command.content,msg.commandIndex);
     }
 
 //    }

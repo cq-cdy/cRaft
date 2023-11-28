@@ -31,7 +31,7 @@ enum class RETURN_TYPE {
     STATE_CHANGED,
 };
 static std::vector<std::string> peersAddr = {
-        "127.0.0.1:8110", "127.0.0.1:8151", "127.0.0.1:8172", "127.0.0.1:19664", "127.0.0.1:16464"
+        "127.0.0.1:10000", "127.0.0.1:10001", "127.0.0.1:10002", "127.0.0.1:10003", "127.0.0.1:10004"
 };
 struct Command_ {
     std::string  content;

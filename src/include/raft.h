@@ -72,7 +72,7 @@ namespace craft {
     public:
 
 
-        std::vector<LogEntry> m_logs_{LogEntry()};
+        std::vector<LogEntry> m_logs_;
         co_mutex co_mtx_;
         co_chan<ApplyMsg> *m_applyCh_ = nullptr;
         co_chan<void *> *m_notifyApplyCh_ = nullptr;

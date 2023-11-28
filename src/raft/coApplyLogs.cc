@@ -9,13 +9,11 @@ namespace craft {
 
         go [this] {
 
-            for(;!m_iskilled_;)
-            {
-                void * a;
-                *m_notifyApplyCh_>> a;
+            for (; !m_iskilled_;) {
+                void *a;
+                *m_notifyApplyCh_ >> a;
                 startApplyLogs(this);
             }
-
 
         };
 
@@ -23,15 +21,13 @@ namespace craft {
 
     void startApplyLogs(Raft *rf) {
         rf->co_mtx_.lock();
-//        co_defer [rf] {
-//            rf->m_applyTimer->reset(APPLY_INTERVAL);
-//        };
         std::vector<ApplyMsg> msgs;
 
         if (rf->m_lastApplied_ < rf->m_snapShotIndex) {
             //todo install snapshot
         } else if (rf->m_commitIndex_ <= rf->m_lastApplied_) {
-                spdlog::info("rf->m_commitIndex_ <= rf->m_lastApplied_");
+            //todo;
+            msgs.resize(0);
         } else {
             msgs.resize(rf->m_commitIndex_ - rf->m_lastApplied_);
             for (int i = rf->m_lastApplied_ + 1; i <= rf->m_commitIndex_; i++) {
@@ -42,9 +38,13 @@ namespace craft {
 
         }
         rf->co_mtx_.unlock();
-        for(const auto& msg:msgs){
+        if (msgs.empty()) { return; }
+        for (const auto &msg: msgs) {
+
             rf->co_mtx_.lock();
-            *rf->m_applyCh_ << msg;
+            if (msg.commandValid) {
+                *rf->m_applyCh_ << msg;
+            }
             rf->m_lastApplied_ = msg.commandIndex;
             rf->co_mtx_.unlock();
         }

@@ -19,6 +19,7 @@ namespace craft {
                 term = m_rf_->m_current_term_;
                 index = m_rf_->getLastLogIndex();
             }
+
             //to raft
             LogEntry logEntry;
             logEntry.set_term(term);
@@ -31,7 +32,7 @@ namespace craft {
             response->set_term(term);
             response->set_index(index);
 
-            spdlog::debug("success submit command [{}]", request->content());
+            spdlog::debug("success submit command:[{}]", request->content());
             break;
         }
         m_rf_->co_mtx_.unlock();

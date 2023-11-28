@@ -5,31 +5,30 @@
 
 namespace craft {
     AbstractPersist::AbstractPersist(std::string absPersistPath) {
-        this->absPersistPath_ = std::move(absPersistPath);
         std::vector<std::string> all_persist_files = {"commitIndex.data", "currentTerm.data", "lastlogindex.data",
                                                       "lastSnapshotIndex.data", "lastSnapshotTerm.data",
                                                       "logentry.command.data", "logentry.term.data", "votefor.data"};
-
+        this->absPersistPath_ = std::move(absPersistPath);
         for (auto &file: all_persist_files) {
             std::filesystem::path dir = absPersistPath_;
             std::filesystem::path full_path = dir /"persist"/ file;
             if (! std::filesystem::exists(full_path.parent_path())) {
                 // 如果父目录不存在，创建它
                 if ( std::filesystem::create_directories(full_path.parent_path())) {
-                    spdlog::info("success create path [{}]",full_path.parent_path().string());
+                    spdlog::info("success create path:[{}]",full_path.parent_path().string());
                 } else {
-                    spdlog::error("error create path [{}]",full_path.parent_path().string());                }
+                    spdlog::error("error create path:[{}]",full_path.parent_path().string());                }
             }
             if (!std::filesystem::exists(full_path)) {
                 std::ofstream ofs(full_path);
                 if (ofs) {
-                    spdlog::info("success create file [{}]", full_path.string());
+                    spdlog::info("success create file:[{}]", full_path.string());
                 } else {
-                    spdlog::error("error create file [{}]", full_path.string());
-                    continue;
+                    spdlog::critical("error create file:[{}]", full_path.string());
+                    exit(2);
                 }
             } else {
-                spdlog::info("success find file [{}]", full_path.string());
+                spdlog::info("success find file:[{}]", full_path.string());
             }
             file = full_path;
         }
@@ -154,7 +153,7 @@ namespace craft {
             }
             file.close();
         } else {
-            spdlog::error("无法打开文件:{}", filename);
+            spdlog::error("can not open file:{}", filename);
         }
 
         return lines;

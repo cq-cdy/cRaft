@@ -23,8 +23,7 @@ namespace craft {
                 if (m_state_ == STATE::LEADER) {
                     spdlog::debug("in co_appendAentries state:[{}],my term is [{}]",
                                   stringState(m_state_), m_current_term_);
-                    int allCount = m_peers_->numPeers(), successCount = 1,
-                            resCount = 1;
+                    int allCount = m_peers_->numPeers();
                     std::shared_ptr<co_chan<bool>> successChan(
                             new co_chan<bool>(allCount - 1));
                     for (int i = 0; i < this->m_peers_->numPeers(); i++) {
@@ -68,10 +67,10 @@ namespace craft {
                             }
                             if (m_state_ == STATE::LEADER) {
                                 if (reply->success()) {
-                                    spdlog::info("reply->success");
+                                    spdlog::debug("reply->success");
                                     handleAppendSuccess(this, i, args, reply);
                                 } else {
-                                    spdlog::info("reply->faild");
+                                    spdlog::debug("reply->faild");
                                     handleAppendFaild(this, i, args, reply);
                                 }
                             }
@@ -125,9 +124,9 @@ namespace craft {
        // spdlog::info("in sendToAppendEntries,reply:[{}]", reply->DebugString());
         if (ok.ok()) {
             isCallok = true;
-            spdlog::debug("heat beat ok");
+            //spdlog::debug("heat beat ok");
         } else {
-            spdlog::error("heat beat err");
+            spdlog::error("disconnect to FOLLOWER [{}]:{}", serverId,peersAddr[serverId]);
         }
         return isCallok;
     }
