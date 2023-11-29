@@ -1,0 +1,7 @@
+# Project exclude paths
+/cmake-build-debug/
+/build/
+/.idea/
+/.vscode/
+/lib/*.a
+/bin

@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+/*
+Snapshot
+*/
+message InstallSnapshotArgs{
+    int32 term = 1;
+    int32 leaderId = 2;
+    int32 lastIncludeIndex = 3;
+    int32 lastIncludeTerm = 4;
+
+}
+message InstallSnapshotReply{
+    int32 term = 1;
+    bool isCanSendSnapFile = 2;
+}
+message  TransferSnapShotFileArgs{
+    bytes data = 1;
+}
+message  TransferSnapShotFileReply{
+    bool isInstallSnapFile = 1;
+}
+
+/*
+Vote
+*/
+message RequestVoteArgs {
+    int32 term = 1;
+    int32 candidateId = 2;
+    int32 lastLogIndex   = 3;
+    int32 lastLogTerm = 4;
+}
+message RequestVoteReply {
+    int32 term = 1;
+    bool voteGranted = 2;
+}
+
+/*
+Entries
+*/
+message LogEntry {
+    int32 term = 1;
+    string command = 2;
+}
+message AppendEntriesArgs {
+    int32 term = 1;
+    int32 leaderId = 2;
+    int32 prevLogIndex = 3;
+    int32 prevLogTerm = 4;
+    repeated LogEntry entries = 5;
+    int32 leaderCommit = 6;
+}
+message AppendEntriesReply{
+    int32 term = 1;
+    bool success = 2;
+    int32 nextLogTerm = 3;
+    int32 nextLogIndex = 4;
+}
+
+/*service*/
+message ResultPackge{
+    int32 index =1;
+    int32 term = 2;
+    bool    isLeader = 3;
+}
+message Command{
+    string content = 1;
+}
+service RaftRPC{
+    rpc installSnapshot(InstallSnapshotArgs) returns(InstallSnapshotReply){}
+    rpc TransferSnapShotFile(stream TransferSnapShotFileArgs) returns(TransferSnapShotFileReply){}
+    rpc submitCommand(Command) returns(ResultPackge){}
+    rpc requestVoteRPC(RequestVoteArgs)  returns (RequestVoteReply){}
+    rpc appendEntries(AppendEntriesArgs) returns (AppendEntriesReply){}
+}
