@@ -1,5 +1,4 @@
 #include <thread>
-
 #include "craft/raft.h"
 #include "regex"
 
@@ -43,6 +42,7 @@ int main(int argc, char **argv) {
 
     //set snapshot and persist path
     std::string abs_path = "/home/cdy/code/projects/cRaft/.data";
+
     // set snapshot file name
     std::string snapFileName = "KVServer.snap";
     KVServer kv(abs_path, snapFileName);

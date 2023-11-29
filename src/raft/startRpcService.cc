@@ -19,9 +19,7 @@ namespace craft{
             std::string server_address(m_rf_->m_clusterAddress_[m_rf_->m_me_]);
             ServerBuilder builder;
             builder.SetSyncServerOption(grpc::ServerBuilder::SyncServerOption::NUM_CQS, 4);
-            int a =1;
-            builder.AddListeningPort(server_address, grpc::InsecureServerCredentials(),&a);
-            builder.AddChannelArgument(GRPC_ARG_ALLOW_REUSEPORT, 1);
+
             builder.RegisterService(this);
             std::unique_ptr<Server> server(builder.BuildAndStart());
             spdlog::info("Server[{}] listening on {}", m_rf_->m_me_, server_address);
