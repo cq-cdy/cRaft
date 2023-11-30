@@ -38,22 +38,22 @@ namespace craft {
         auto logentry_term = readLines(all_persist_files[6]);
         auto votefor = readLines(all_persist_files[7]);
 
-        if (commitIndex.size() != 1 && commitIndex.size() != 0) {
+        if (commitIndex.size() != 1 && !commitIndex.empty()) {
             spdlog::error("commitIndex.data content error");
         }
-        if (currentTerm.size() != 1 && currentTerm.size() != 0) {
+        if (currentTerm.size() != 1 && !currentTerm.empty()) {
             spdlog::error("currentTerm.data content error");
         }
-        if (lastlogindex.size() != 1 && lastlogindex.size() != 0) {
+        if (lastlogindex.size() != 1 && !lastlogindex.empty()) {
             spdlog::error("lastlogindex.data content error");
         }
-        if (lastSnapshotIndex.size() != 1 && lastSnapshotIndex.size() != 0) {
+        if (lastSnapshotIndex.size() != 1 && !lastSnapshotIndex.empty()) {
             spdlog::error("lastSnapshotIndex.data content error");
         }
-        if (lastSnapshotTerm.size() != 1 && lastSnapshotTerm.size() != 0) {
+        if (lastSnapshotTerm.size() != 1 && !lastSnapshotTerm.empty()) {
             spdlog::error("lastSnapshotTerm.data content error");
         }
-        if (votefor.size() != 1 && votefor.size() != 0) {
+        if (votefor.size() != 1 && !votefor.empty()) {
             spdlog::error("votefor.data content error");
         }
         if (logentry_command.size() != logentry_term.size()) {
@@ -64,26 +64,26 @@ namespace craft {
         }
         // ------------------
         if (!commitIndex.empty()) {
-            commitIndex_ = std::atoi(commitIndex[0].c_str());
+            commitIndex_ = std::stoi(commitIndex[0]);
         }
         if (!currentTerm.empty()) {
-            currentTerm_ = std::atoi(currentTerm[0].c_str());
+            currentTerm_ = std::stoi(currentTerm[0]);
         }
         if (!lastlogindex.empty()) {
-            lastlogindex_ = std::atoi(lastlogindex[0].c_str());
+            lastlogindex_ = std::stoi(lastlogindex[0]);
         }
         if (!votefor.empty()) {
-            votedFor_ = std::atoi(votefor[0].c_str());
+            votedFor_ = std::stoi(votefor[0]);
         }
         if (!lastSnapshotIndex.empty()) {
-            lastSnapshotIndex_ = std::atoi(lastSnapshotIndex[0].c_str());
+            lastSnapshotIndex_ = std::stoi(lastSnapshotIndex[0]);
         }
         if (!lastSnapshotTerm.empty()) {
-            lastSnapshotTerm_ = std::atoi(lastSnapshotTerm[0].c_str());
+            lastSnapshotTerm_ = std::stoi(lastSnapshotTerm[0]);
         }
         if((!logentry_term.empty())&&(!logentry_command.empty())){
             for (int i = 0; i < logentry_term.size(); i++) {
-                int term = std::atoi(logentry_term[i].c_str());
+                int term = std::stoi(logentry_term[i]);
                 logEntry_.emplace_back(term, logentry_command[i]);
             }
         }

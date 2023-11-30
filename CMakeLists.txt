@@ -60,6 +60,7 @@ add_library(craft STATIC
         ${RAFT_SRC}
 )
 
+#-----------------------------------
 target_link_libraries(craft PUBLIC
         absl::flags
         absl::flags_parse
@@ -71,6 +72,13 @@ target_link_libraries(craft PUBLIC
         pthread
          )
 
+# ----------------------------------------
+#target_link_libraries(craft PUBLIC
+#        ${_REFLECTION}
+#        ${_GRPC_GRPCPP}
+#        ${_PROTOBUF_LIBPROTOBUF}
+#)
+#
 # # Targets greeter_[async_](client|server)
 #foreach(_target server client)
 #   add_executable(${_target} "${_target}.cc")

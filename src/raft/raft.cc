@@ -39,7 +39,6 @@ namespace craft {
             exit(1);
         }else{
             m_me_ = std::stoi(ids->second);
-            m_me_ = 0;
         }
         ids = configMap.find("HEART_BEAT_INTERVAL");
         if(ids != configMap.end()){
@@ -48,12 +47,12 @@ namespace craft {
         }
         ids = configMap.find("ELECTION_TIMEOUT");
         if(ids != configMap.end()){
-            m_heatBeatInterVal = std::stoi(ids->second);
+            m_leaderEelectionTimeOut_ = std::stoi(ids->second);
             spdlog::info("find ELECTION_TIMEOUT in config= [{}]",m_leaderEelectionTimeOut_);
         }
         ids = configMap.find("RPC_TIMEOUT");
         if (ids != configMap.end()) {
-            m_heatBeatInterVal = std::stoi(ids->second);
+            m_rpcTimeOut_ = std::stoi(ids->second);
             spdlog::info("find RPC_TIMEOUT in config= [{}]", m_rpcTimeOut_);
         }
 
@@ -64,6 +63,10 @@ namespace craft {
                 servers.push_back(it->second);
             }
             setClusterAddress(servers);
+        }
+        if(m_clusterAddress_.empty()){
+            spdlog::error("not found any server addr from [~/craft/craft.conf]");
+            exit(1);
         }
         spdlog::info("local id = [{}]", m_me_);
     }

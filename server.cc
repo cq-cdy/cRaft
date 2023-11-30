@@ -35,7 +35,7 @@ private:
 int main(int argc, char **argv) {
 
     // start libgo coroutine
-    std::thread([] { co_sched.Start(1024); }).detach();
+    std::thread([] { co_sched.Start(0,1024); }).detach();
 
     //set log level
     spdlog::set_level(spdlog::level::info);
@@ -54,6 +54,6 @@ int main(int argc, char **argv) {
     ApplyMsg msg;
     msgCh >> msg;
     spdlog::info(" get Apply msg [{},{},{}]", msg.commandValid, msg.command.content, msg.commandIndex);
-    raft.saveSnapShot(msg.commandIndex);
+    //raft.saveSnapShot(msg.commandIndex);
     sleep(INT32_MAX);
 }

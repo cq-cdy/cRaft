@@ -1,3 +1,4 @@
+#pragma once
 #include <string>
 #include <regex>
 #include "unordered_map"
@@ -22,12 +23,12 @@ public:
         }
     }
 
-    std::unordered_multimap<std::string, std::string> getMap() const {
+    std::multimap<std::string, std::string> getMap() const {
         return configMap;
     }
 
 private:
-    std::unordered_multimap<std::string, std::string> configMap;
+    std::multimap<std::string, std::string> configMap;
 
     void parseLine(const std::string &line) {
         // 去除行首行尾的空格

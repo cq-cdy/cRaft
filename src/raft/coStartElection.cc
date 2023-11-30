@@ -39,7 +39,8 @@ namespace craft {
             return;
         }
         rf->changeToState(STATE::CANDIDATE);
-        int allCount = rf->m_peers_->numPeers(), grantedCount = 1, resCount = 1;
+        int allCount = rf->m_clusterAddress_.size(), grantedCount = 1, resCount = 1;
+        spdlog::debug("allCount ={} ",allCount);
         std::shared_ptr<co_chan<bool>> grantedChan(new co_chan<bool>(allCount - 1));
         std::shared_ptr<RequestVoteArgs> args(new RequestVoteArgs);
         args->set_candidateid(rf->m_me_);

@@ -1,12 +1,13 @@
+## cRaft: Raft distributed consensus algorithm service framework based on C++ stacked coroutines
 ## cRaft:基于C++有栈协程的Raft分布式一致性共识算法服务框架
 
 * 基于**C++有栈协程**轻量高效的设计
 * 支持**分布式集群**部署的稳定运行、实现有效的容错机制
 * 能够**多并发**同步日志的**压力测试**下,领导者**宕机、上线**等情况保证集群的稳定性
 * 使用**依赖注入**和**模板方法**等设计模式提供与上层服务具有解耦的接口
-* 安装和使用快捷、方便
+* 安装和使用快捷、方便，提供自定义快照同步服务
 -----
-  Raft原论文：[In Search of an Understandable Consensus Algorithm
+Raft原论文：[In Search of an Understandable Consensus Algorithm
 (Extended Version)](https://raft.github.io/raft.pdf)
 -------------------
 
@@ -15,7 +16,7 @@
 
 >gcc/++ :11.4.0，C++ 20
 
-> CMake-3.26.4 
+> CMake-3.26.4
 
 > C++协程库libgo [ [libgo-3.1-stable下载、安装] ](https://github.com/yyzybb537/libgo/releases/tag/v3.1-stable)
 
@@ -69,7 +70,7 @@ loglevel = INFO
 每当你想新增一台节点，就增加一条servers信息，其中id是本机所在的servers的序号，比如servers = 192.168.100.102 的 id就是1，192.168.100.100的id就是0
 
 
-#### 2.创建自己的自定义服务，如KV简直存储服务,KVServer.cc,导入头文件craft/raft.h
+#### 2.创建自己的自定义服务，如KV键值存储服务,KVServer.cc,导入头文件craft/raft.h
 ``` cpp
 #include <thread>
 #include "craft/raft.h"
@@ -132,75 +133,31 @@ int main(int argc, char **argv) {
     sleep(INT32_MAX);
 }
 ``` 
-这是基本基本你的基本的分布式服务部署的方式，其中msgCh是客户端向集群提交的日志条目被同步到大部分节点上后，会从msgCh返回得到ApplyMsg,可以自由的保存任意时刻的快照。最后决定并没有在craft服务中提供阻塞，因此需要上层服务的阻塞 sleep(INT32_MAX);，同时关于libgo协程框架的使用，在craft之上，请务必将  std::thread([] { co_sched.Start(1024); }).detach();放在第一行开启协程，并且**集群间的快照备份是支持自动的，采用的异步流式传输，因此能够很好的应对后续快照大文件的备份。**
+这是基本的分布式服务部署的方式，其中msgCh是客户端向集群提交的日志条目被同步到大部分节点上后，会从msgCh返回得到ApplyMsg,可以自由的保存任意时刻的快照。最后决定并没有在craft服务中提供阻塞，因此需要上层服务的阻塞 sleep(INT32_MAX);，同时关于libgo协程框架的使用，在craft之上，请务必将  std::thread([] { co_sched.Start(1024); }).detach();放在第一行开启协程，并且**集群间的快照备份是支持自动的，采用的异步流式传输，因此能够很好的应对后续快照大文件的备份。**
 
 #### 3.客户端的使用
 ``` c++
-#include <grpc++/grpc++.h>
 
-#include <chrono>
+#include "craft/client.h"
 
-#include "craft/peers.h"
-#include "craft/utils/commonUtil.h"
 
-using grpc::Channel;
-using grpc::ClientContext;
-using grpc::Status;
-using namespace std::chrono;
-auto start = steady_clock::now();
-
-std::vector<std::string> peersAddr;
 int main(int argc, char **argv) {
-    ConfigReader reader((std::string(getenv("HOME")) + "/craft/craft.conf"));
-    auto configMap = reader.getMap();
-   auto range = configMap.equal_range("servers");
-    if (range.first != range.second) {
-        std::vector<std::string> servers;
-        for (auto it = range.first; it != range.second; it++) {
-            peersAddr.push_back(it->second);
-        }
-    }
-    int count = 0;
-    static int numThreads = 4;
-    // stress test
-    for (int i = 0;; i %= peersAddr.size()) {
-        auto channel = grpc::CreateChannel(peersAddr[i],
-                                           grpc::InsecureChannelCredentials());
-        auto stub = RaftRPC::NewStub(channel);
-        do {
-            Command args;
-            ::ResultPackge reply;
-            args.set_content("add some data");
-
-            ClientContext context;
-            std::chrono::system_clock::time_point deadline_ =
-                std::chrono::system_clock::now() +
-                std::chrono::milliseconds(200);
-            context.set_deadline(deadline_);
-            Status ok = stub->submitCommand(&context, args, &reply);
-            if (ok.ok()) {
-                spdlog::info(
-                    "count [i]={},target term = [{}],index = [{}],isleader = "
-                    "[{}]",
-                    count++, reply.term(), reply.index(), reply.isleader());
-                if (!reply.isleader()) {
-                    break;
-                }
-            } else {
-                spdlog::error("submit command error");
-                break;
-            }
-
-        } while (true);
-        i++;
+    spdlog::set_level(spdlog::level::debug);
+    CRaftClient client;
+    ClientResult res = client.submitCommand("modify a data");
+    if (!res.is_timeout) {
+        spdlog::info("success submit a log,term = [{}],index = [{}]", res.term, res.index);
+    } else {
+       spdlog::error("submit log faild - time out");
     }
     return 0;
 }
+
 ```
-目前客户端的使用是craft对外提供的rpc的向集群添加数据的接口，只有领导者才能添加，因此会做一个领导者id的缓存。后续也会对客户端的代码进一步封装。
+目前客户端对gRPC请求的封装，通过ClientResult返回值拿到tern和index
 
 #### 4.编译运行
-创建CMakeLists.txt，并且将common.cmake文件辅助到你的CMakeLists.txt所在目录，当然，自此之前你得保证上面所提到的环境库已经安装好了。
+创建CMakeLists.txt，并且将common.cmake文件复制到你的CMakeLists.txt所在目录，当然，自此之前你得保证上面所提到的环境库已经安装好了。
 ```cmake
 cmake_minimum_required(VERSION 3.2)
 ...
@@ -225,7 +182,7 @@ target_link_libraries(kvservice PUBLIC
 然后可以在其他节点上执行这些步骤，就可以开启属于自己的分布式系统。
 
 #### 5.接下来
-暂时并没有提供动态上下线节点的功能没后续会考虑加入，日志暂时还没由落盘，短时间内二次启动可能集群通信会不通畅，这貌似是grpc的特性，我在调试的时候，每次都要重新更换端口集群通讯就完全没问题。我也尝试对grpc设置了如下的端口复用，但貌似并没有效果，等知道的大佬帮忙指出一下
+暂时并没有提供动态上下线节点的功能后续会考虑加入，日志暂时还没由落盘，短时间内二次启动可能集群通信会不通畅，这貌似是grpc的特性，我在调试的时候，每次都要重新更换端口集群通讯就完全没问题。我也尝试对grpc设置了如下的端口复用，但貌似并没有效果，等知道的大佬帮忙指出一下
 ``` c++
 ...
 int a =1;

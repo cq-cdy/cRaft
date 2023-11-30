@@ -41,6 +41,11 @@ struct ApplyMsg {
     int commandIndex{};
 };
 
+struct ClientResult {
+    int term{};
+    int index{};
+    bool is_timeout{};
+};
 static uint getElectionTimeOut(uint timeout) {
     std::random_device rd;
     std::mt19937 gen(rd());
