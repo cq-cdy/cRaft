@@ -46,7 +46,7 @@ public:
                     std::chrono::system_clock::now() +
                     std::chrono::milliseconds(timeout);
             context.set_deadline(deadline_);
-            spdlog::info("client to [{}]:{}",i,m_peersAddr[i]);
+            spdlog::debug("client to [{}]:{}",i,m_peersAddr[i]);
             Status ok = stub->submitCommand(&context, args, &reply);
 
             if (ok.ok()) {
