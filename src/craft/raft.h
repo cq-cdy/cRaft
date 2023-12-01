@@ -8,6 +8,7 @@
 #include "utils/timer.h"
 #include "startRpcService.h"
 #include "persist/abstractPersist.h"
+
 namespace craft {
 
     class Raft final : public noncopyable {

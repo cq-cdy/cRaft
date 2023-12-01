@@ -51,10 +51,12 @@ int main(int argc, char **argv) {
     craft::Raft raft(&kv, &msgCh);
 
     raft.launch();
+    while(true){
+        ApplyMsg msg;
+        msgCh >> msg;
+        spdlog::info(" get Apply msg [{},{},{}]", msg.commandValid, msg.command.content, msg.commandIndex);
+        //raft.saveSnapShot(msg.commandIndex);
+    }
 
-    ApplyMsg msg;
-    msgCh >> msg;
-    spdlog::info(" get Apply msg [{},{},{}]", msg.commandValid, msg.command.content, msg.commandIndex);
-    //raft.saveSnapShot(msg.commandIndex);
     sleep(INT32_MAX);
 }

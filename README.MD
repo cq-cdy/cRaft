@@ -9,8 +9,8 @@
 * Uses design patterns such as **dependency injection and template methods** to provide interfaces that are decoupled from upper-level services
 * Installation and use are quick and convenient, providing custom snapshot synchronization services
 -----
-Raft Paper：[In Search of an Understandable Consensus Algorithm
-(Extended Version)](https://raft.github.io/raft.pdf)
+
+#### Raft Paper：[In Search of an Understandable Consensus Algorithm (Extended Version)](https://raft.github.io/raft.pdf)
 -------------------
 
 ### Environment

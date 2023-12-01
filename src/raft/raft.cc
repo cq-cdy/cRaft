@@ -312,7 +312,7 @@ namespace craft {
         stream.close();
     }
 
-    void writePersist(std::string logtermFile, std::string logcommandFile, const std::vector <LogEntry> &logs) {
+    void writePersist(std::string logtermFile, std::string logcommandFile, const std::vector <LogEntry>& logs) {
         {
             // 清空文件
             std::ofstream logtermStream;
@@ -340,9 +340,12 @@ namespace craft {
         if (!logcommandStream) {
             spdlog::error("can not open file [{}]", logcommandFile);
         }
-        for (auto i = 1; i < logs.size(); i++) {
-            logtermStream << logs[i].term() << std::endl;
-            logcommandStream << logs[i].command() << std::endl;
+
+        if(logs.size() >1){
+            for (auto i = 1; i < logs.size(); i++) {
+                logtermStream << logs[i].term() << std::endl;
+                logcommandStream << logs[i].command() << std::endl;
+            }
         }
         logtermStream.close();
         logcommandStream.close();
@@ -367,10 +370,11 @@ namespace craft {
             }
             writePersist(dir / "commitIndex.data", m_commitIndex_);
             writePersist(dir / "currentTerm.data", m_current_term_);
-            writePersist(dir / "lastlogindex.data", getLastLogIndex());
             writePersist(dir / "lastSnapshotIndex.data", m_snapShotIndex);
             writePersist(dir / "lastSnapshotTerm.data", m_snapShotTerm);
             writePersist(dir / "votefor.data", m_votedFor_);
+            writePersist(dir / "lastlogindex.data", getLastLogIndex());
+
             writePersist(dir / "logentry.term.data", dir / "logentry.command.data", m_logs_);
         };
 

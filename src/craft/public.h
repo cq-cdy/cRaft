@@ -20,7 +20,6 @@ enum class STATE {
     CANDIDATE,
     LEADER,
 };
-
 enum class RETURN_TYPE {
     TIME_OUT,
     APPLYED,

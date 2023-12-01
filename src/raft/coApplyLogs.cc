@@ -52,15 +52,14 @@ namespace craft {
             }
 
         }
-        rf->co_mtx_.unlock();
         if (msgs.empty()) { return; }
         for (const auto &msg: msgs) {
-            rf->co_mtx_.lock();
             if (msg.commandValid) {
                 *rf->m_applyCh_ << msg;
             }
             rf->m_lastApplied_ = msg.commandIndex;
-            rf->co_mtx_.unlock();
         }
+        rf->co_mtx_.unlock();
+
     }
 };

@@ -32,9 +32,12 @@ namespace craft {
                             continue;
                         }
                         go [this, i] {
+
                             co_mtx_.lock();
-                            if (m_state_ != STATE::LEADER) {
+                            co_defer[this]{
                                 co_mtx_.unlock();
+                            };
+                            if (m_state_ != STATE::LEADER) {
                                 return;
                             }
                             std::shared_ptr<AppendEntriesArgs> args(
@@ -45,7 +48,7 @@ namespace craft {
                             auto argsPack = getAppendLogs(i);
                             args->set_prevlogindex(std::get<0>(argsPack));
                             args->set_prevlogterm(std::get<1>(argsPack));
-                            for (const auto &m: std::get<2>(argsPack)) {
+                            for (auto m: std::get<2>(argsPack)) {
                                 auto a = args->add_entries();
                                 a->set_term(m.term());
                                 a->set_command(m.command());
@@ -54,7 +57,6 @@ namespace craft {
                                     new AppendEntriesReply);
                             bool isCallOk = sendToAppendEntries(this, i, args, reply);
                             if (!isCallOk) {
-                                co_mtx_.unlock();
                                 return;
                             }
                             if (reply->term() > m_current_term_) {
@@ -62,7 +64,6 @@ namespace craft {
                                 changeToState(STATE::FOLLOWER);
                                 m_electionTimer->reset(getElectionTimeOut(m_leaderEelectionTimeOut_));
                                 persist();
-                                co_mtx_.unlock();
                                 return;
                             }
                             if (m_state_ == STATE::LEADER) {
@@ -74,7 +75,6 @@ namespace craft {
                                     handleAppendFaild(this, i, args, reply);
                                 }
                             }
-                            co_mtx_.unlock();
                         };
                     }
                 } else {

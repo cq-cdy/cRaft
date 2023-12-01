@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 3.2)
 project(cRaft C CXX)
 
 include(common.cmake)
-# 设置项目编译头文件搜索路径 -I
 include_directories(${PROJECT_SOURCE_DIR}/src)
 # # Protos Directory
 file(GLOB PROTO_INPUT "./src/protos/*.proto")
@@ -80,7 +79,7 @@ target_link_libraries(craft PUBLIC
 #)
 #
 # # Targets greeter_[async_](client|server)
-#foreach(_target KVServer client)
+#foreach(_target server client)
 #   add_executable(${_target} "${_target}.cc")
 #   target_link_libraries(${_target}
 #
