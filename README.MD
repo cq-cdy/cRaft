@@ -1,54 +1,56 @@
-## cRaft: Raft distributed consensus algorithm service framework based on C++ stacked coroutines
-## cRaft:基于C++有栈协程的Raft分布式一致性共识算法服务框架
+# cRaft: Raft distributed consensus algorithm service framework based on C++ stacked coroutines
 
-* 基于**C++有栈协程**轻量高效的设计
-* 支持**分布式集群**部署的稳定运行、实现有效的容错机制
-* 能够**多并发**同步日志的**压力测试**下,领导者**宕机、上线**等情况保证集群的稳定性
-* 使用**依赖注入**和**模板方法**等设计模式提供与上层服务具有解耦的接口
-* 安装和使用快捷、方便，提供自定义快照同步服务
+#### [[中文说明]](https://github.com/cq-cdy/cRaft/tree/master/zh)
+---
+
+* Based on the **lightweight and efficient design of C++ stack coroutines**
+* Supports **stable operation of distributed cluster** deployment, implementing effective fault tolerance mechanisms
+* Under the **pressure test of multi-concurrent synchronous logs**, it ensures the stability of the cluster in situations such as leader **downtime and going online**
+* Uses design patterns such as **dependency injection and template methods** to provide interfaces that are decoupled from upper-level services
+* Installation and use are quick and convenient, providing custom snapshot synchronization services
 -----
-Raft原论文：[In Search of an Understandable Consensus Algorithm
+Raft Paper：[In Search of an Understandable Consensus Algorithm
 (Extended Version)](https://raft.github.io/raft.pdf)
 -------------------
 
-### 环境
+### Environment
 > ubuntu 20.04
 
 >gcc/++ :11.4.0，C++ 20
 
 > CMake-3.26.4
 
-> C++协程库libgo [ [libgo-3.1-stable下载、安装] ](https://github.com/yyzybb537/libgo/releases/tag/v3.1-stable)
+>C++ coroutine library : libgo [ [libgo-3.1-stable download and installation] ](https://github.com/yyzybb537/libgo/releases/tag/v3.1-stable)
 
-> grpc-1.45.2  [[下载地址]](https://github.com/grpc/grpc)
+> grpc-1.45.2  [[download link]](https://github.com/grpc/grpc)
 
-> protobuf-3.19.4.0(安装gprc自动安装)
+> protobuf-3.19.4.0(Follow grpc automatic installation)
 
-> spdlog 日志库 [[下载地址]](https://github.com/gabime/spdlog)
+> spdlog Log library [[download link]](https://github.com/gabime/spdlog)
 
 
-## 安装使用
-1.配置好上述环境后 git clone
+## Install and use
+1.After configuring the above environment, git clone
 ```
 git clone https://github.com/cq-cdy/cRaft
 ```
-2.编译
+2.compile
 ```
 cd cRaft
 mkdir build && cd build
 cmake .. && make
 ```
-3.此时会生成静态库 lib/libcraft.a
+3.At this time, the static library `lib/libcraft.a` will be generated.
 ```
 sudo cp libcraft.a /usr/local/lib
 sudo cp -r craft/ /usr/local/include
 sudo cp -r rpc/  /usr/local/include
 ```
-安装完成，接下来构建自己的分布式服务
+The installation is complete, then build your own distributed service
 
-## 如何使用
+## How to use?
 
-#### 1.首先，在~/craft/craft.conf 创建配置文件
+#### 1.First, create a configuration file in `~/craft/craft.conf`
 ```makefile
 id = 0
 #some time out [ms]
@@ -67,10 +69,10 @@ servers = 192.168.100.104:10156
 loglevel = INFO
 
 ```
-每当你想新增一台节点，就增加一条servers信息，其中id是本机所在的servers的序号，比如servers = 192.168.100.102 的 id就是1，192.168.100.100的id就是0
+Whenever you want to add a new server, add a `servers` information, where the `id` is the serial number of the servers where the machine is located. For example, the `id` of `servers` = 192.168.100.102 is `1`, and the `id` of 192.168.100.100 is `0`.
 
 
-#### 2.创建自己的自定义服务，如KV键值存储服务,KVServer.cc,导入头文件craft/raft.h
+#### 2.Create your own custom service, such as KV key-value storage service, ``KVServer.cc``, import the header file `craft/raft.h`
 ``` cpp
 #include <thread>
 #include "craft/raft.h"
@@ -85,11 +87,9 @@ public:
     void deserialization(const char *filename) override {
         // from snapshot file load data to this object
 
-
         /*
          * some IO operation ...
          */
-
     }
 
     void serialization() override {
@@ -99,7 +99,7 @@ public:
         */
     }
 
-    // 一些属于KV服务的方法
+    // Some methods belonging to KV service
     void addPair(std::pair<std::string,std::string> data){
         /*  some operation*/
     }
@@ -110,7 +110,7 @@ private:
 int main(int argc, char **argv) {
 
     // start libgo coroutine
-    std::thread([] { co_sched.Start(1024); }).detach();
+    std::thread([] { co_sched.Start(0,1024); }).detach();
 
     //set log level
     spdlog::set_level(spdlog::level::info);
@@ -133,13 +133,23 @@ int main(int argc, char **argv) {
     sleep(INT32_MAX);
 }
 ``` 
-这是基本的分布式服务部署的方式，其中msgCh是客户端向集群提交的日志条目被同步到大部分节点上后，会从msgCh返回得到ApplyMsg,可以自由的保存任意时刻的快照。最后决定并没有在craft服务中提供阻塞，因此需要上层服务的阻塞 sleep(INT32_MAX);，同时关于libgo协程框架的使用，在craft之上，请务必将  std::thread([] { co_sched.Start(1024); }).detach();放在第一行开启协程，并且**集群间的快照备份是支持自动的，采用的异步流式传输，因此能够很好的应对后续快照大文件的备份。**
+Of course, in addition to reading from the configuration file, you can also set some parameters at runtime. It is natural that the configuration items set at runtime have a higher priority than the configuration file:
+```c++
+    craft::Raft raft(&kv, &msgCh);
+    raft.setClusterAddress({"172.16.66.100:9667","172.16.66.101:9667","172.16.66.102:9667"});
+    raft.setRpcTimeOut(80);
+    raft.setHeatBeatTimeOut(150);
+    raft.setLeaderEelectionTimeOut(1500);
+    raft.setLogLevel(spdlog::level::debug);
+    //Make relevant settings before raft.launch()
 
-#### 3.客户端的使用
+    raft.launch();
+```
+This is a basic distributed service deployment method. msgCh is the log entry submitted by the client to the cluster. After being synchronized to most nodes, ApplyMsg will be returned from msgCh, and snapshots at any time can be saved freely. The final decision was not to provide blocking in the craft service, so the blocking `sleep(INT32_MAX);` of the upper-layer service was needed. At the same time, regarding the use of the libgo coroutine framework, on top of craft, be sure to use `std::thread([] { co_sched. Start(1024); }).detach();` is placed in the first line to start the coroutine, and the snapshot backup between clusters supports automatic and asynchronous streaming transmission, so it can well cope with subsequent large snapshot files backup.
+
+#### 3.Client usage
 ``` c++
-
 #include "craft/client.h"
-
 
 int main(int argc, char **argv) {
     spdlog::set_level(spdlog::level::debug);
@@ -152,14 +162,15 @@ int main(int argc, char **argv) {
     }
     return 0;
 }
-
 ```
-目前客户端对gRPC请求的封装，通过ClientResult返回值拿到tern和index
+The client encapsulates gRPC requests. The client currently does not provide an API for changing related parameters at runtime like the server does. Therefore, currently the client can only read relevant information from the configuration file and obtain the added log through the `ClientResult` return value. `term` and `index`
 
-#### 4.编译运行
-创建CMakeLists.txt，并且将common.cmake文件复制到你的CMakeLists.txt所在目录，当然，自此之前你得保证上面所提到的环境库已经安装好了。
+#### 4.Compile and run your service
+Create `CMakeLists.txt`, and copy the `common.cmake` file to the directory where your CMakeLists.txt is located. Of course, you must ensure that the environment libraries mentioned above have been installed before this.
 ```cmake
 cmake_minimum_required(VERSION 3.2)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 ...
 project(KVserver C CXX)
 include(common.cmake)
@@ -177,12 +188,11 @@ target_link_libraries(kvservice PUBLIC
           libgo
           dl
           pthread)
-
 ```
-然后可以在其他节点上执行这些步骤，就可以开启属于自己的分布式系统。
+You can then perform these steps on other nodes to start your own distributed system.
 
-#### 5.接下来
-暂时并没有提供动态上下线节点的功能后续会考虑加入，日志暂时还没由落盘，短时间内二次启动可能集群通信会不通畅，这貌似是grpc的特性，我在调试的时候，每次都要重新更换端口集群通讯就完全没问题。我也尝试对grpc设置了如下的端口复用，但貌似并没有效果，等知道的大佬帮忙指出一下
+#### 5.Next
+Currently, the function of dynamically bringing nodes online and offline is not provided and will be considered in the future. The logs have not yet been placed on disk. Cluster communication may not be smooth during the second startup in a short period of time. This seems to be a feature of grpc. When I was debugging, every time If you have to change the port again, cluster communication will be no problem. I also tried to set up the following port reuse for grpc, but it didn't seem to work. I'm waiting for someone who knows to help point it out.
 ``` c++
 ...
 int a =1;
@@ -190,4 +200,4 @@ builder.AddListeningPort(server_address, grpc::InsecureServerCredentials(),&a);
 builder.AddChannelArgument(GRPC_ARG_ALLOW_REUSEPORT, 1);
 ...
 ```
-* craft参考了[MIT 6.824 lab 的golang代码](https://github.com/1345414527/MIT6.824-2022/tree/master/raft)
+* cRaft refers to [MIT 6.824 lab’s golang code](https://github.com/1345414527/MIT6.824-2022/tree/master/raft)

@@ -49,6 +49,7 @@ int main(int argc, char **argv) {
 
     co_chan<ApplyMsg> msgCh(10000);
     craft::Raft raft(&kv, &msgCh);
+
     raft.launch();
 
     ApplyMsg msg;
