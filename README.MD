@@ -148,6 +148,7 @@ Of course, in addition to reading from the configuration file, you can also set 
 This is a basic distributed service deployment method. msgCh is the log entry submitted by the client to the cluster. After being synchronized to most nodes, ApplyMsg will be returned from msgCh, and snapshots at any time can be saved freely. The final decision was not to provide blocking in the craft service, so the blocking `sleep(INT32_MAX);` of the upper-layer service was needed. At the same time, regarding the use of the libgo coroutine framework, on top of craft, be sure to use `std::thread([] { co_sched. Start(1024); }).detach();` is placed in the first line to start the coroutine, and the snapshot backup between clusters supports automatic and asynchronous streaming transmission, so it can well cope with subsequent large snapshot files backup.
 
 #### 3.Client usage
+touch  `client.cc`
 ``` c++
 #include "craft/client.h"
 
@@ -174,20 +175,21 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 ...
 project(KVserver C CXX)
 include(common.cmake)
+...
+foreach(_target KVServer client)
+   add_executable(${_target} "${_target}.cc")
+   target_link_libraries(${_target}
 
-...
-add_executable(kvservice "KVServer.cc")
-...
-target_link_libraries(kvservice PUBLIC
-            craft
-            absl::flags
-          absl::flags_parse
-          ${_REFLECTION}
-          ${_GRPC_GRPCPP}
-          ${_PROTOBUF_LIBPROTOBUF}
-          libgo
-          dl
-          pthread)
+             craft
+           absl::flags
+           absl::flags_parse
+           ${_REFLECTION}
+           ${_GRPC_GRPCPP}
+           ${_PROTOBUF_LIBPROTOBUF}
+           libgo
+           dl
+           pthread)
+ endforeach()
 ```
 You can then perform these steps on other nodes to start your own distributed system.
 

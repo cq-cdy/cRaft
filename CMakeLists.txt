@@ -80,7 +80,7 @@ target_link_libraries(craft PUBLIC
 #)
 #
 # # Targets greeter_[async_](client|server)
-#foreach(_target server client)
+#foreach(_target KVServer client)
 #   add_executable(${_target} "${_target}.cc")
 #   target_link_libraries(${_target}
 #

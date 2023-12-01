@@ -148,8 +148,8 @@ int main(int argc, char **argv) {
 这是基本的分布式服务部署的方式，其中msgCh是客户端向集群提交的日志条目被同步到大部分节点上后，会从msgCh返回得到ApplyMsg,可以自由的保存任意时刻的快照。最后决定并没有在craft服务中提供阻塞，因此需要上层服务的阻塞 sleep(INT32_MAX);，同时关于libgo协程框架的使用，在craft之上，请务必将  std::thread([] { co_sched.Start(1024); }).detach();放在第一行开启协程，并且**集群间的快照备份是支持自动的，采用的异步流式传输，因此能够很好的应对后续快照大文件的备份。**
 
 #### 3.客户端的使用
+创建 `client.cc`
 ``` c++
-
 #include "craft/client.h"
 
 
@@ -179,19 +179,20 @@ project(KVserver C CXX)
 include(common.cmake)
 
 ...
-add_executable(kvservice "KVServer.cc")
-...
-target_link_libraries(kvservice PUBLIC
-            craft
-            absl::flags
-          absl::flags_parse
-          ${_REFLECTION}
-          ${_GRPC_GRPCPP}
-          ${_PROTOBUF_LIBPROTOBUF}
-          libgo
-          dl
-          pthread)
+foreach(_target KVServer client)
+   add_executable(${_target} "${_target}.cc")
+   target_link_libraries(${_target}
 
+             craft
+           absl::flags
+           absl::flags_parse
+           ${_REFLECTION}
+           ${_GRPC_GRPCPP}
+           ${_PROTOBUF_LIBPROTOBUF}
+           libgo
+           dl
+           pthread)
+ endforeach()
 ```
 然后可以在其他节点上执行这些步骤，就可以开启属于自己的分布式系统。
 
