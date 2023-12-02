@@ -32,12 +32,9 @@ namespace craft {
                             continue;
                         }
                         go [this, i] {
-
                             co_mtx_.lock();
-                            co_defer[this]{
-                                co_mtx_.unlock();
-                            };
                             if (m_state_ != STATE::LEADER) {
+                                co_mtx_.unlock();
                                 return;
                             }
                             std::shared_ptr<AppendEntriesArgs> args(
@@ -57,12 +54,14 @@ namespace craft {
                                     new AppendEntriesReply);
                             bool isCallOk = sendToAppendEntries(this, i, args, reply);
                             if (!isCallOk) {
+                                co_mtx_.unlock();
                                 return;
                             }
                             if (reply->term() > m_current_term_) {
                                 m_current_term_ = reply->term();
                                 changeToState(STATE::FOLLOWER);
                                 m_electionTimer->reset(getElectionTimeOut(m_leaderEelectionTimeOut_));
+                                co_mtx_.unlock();
                                 persist();
                                 return;
                             }
@@ -75,6 +74,7 @@ namespace craft {
                                     handleAppendFaild(this, i, args, reply);
                                 }
                             }
+                            co_mtx_.unlock();
                         };
                     }
                 } else {

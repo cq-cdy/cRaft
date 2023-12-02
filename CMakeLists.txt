@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.2)
 
 project(cRaft C CXX)
-
+set(CMAKE_CXX_FLAGS "-g")
 include(common.cmake)
 include_directories(${PROJECT_SOURCE_DIR}/src)
 # # Protos Directory

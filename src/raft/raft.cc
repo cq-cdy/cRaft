@@ -342,7 +342,7 @@ namespace craft {
         }
 
         if(logs.size() >1){
-            for (auto i = 1; i < logs.size(); i++) {
+            for (int i = 1; i < logs.size(); i++) {
                 logtermStream << logs[i].term() << std::endl;
                 logcommandStream << logs[i].command() << std::endl;
             }
@@ -368,14 +368,15 @@ namespace craft {
             for (const auto &file: all_persist_files) {
                 check(dir / file);
             }
+            co_mtx_.lock();
             writePersist(dir / "commitIndex.data", m_commitIndex_);
             writePersist(dir / "currentTerm.data", m_current_term_);
             writePersist(dir / "lastSnapshotIndex.data", m_snapShotIndex);
             writePersist(dir / "lastSnapshotTerm.data", m_snapShotTerm);
             writePersist(dir / "votefor.data", m_votedFor_);
             writePersist(dir / "lastlogindex.data", getLastLogIndex());
-
             writePersist(dir / "logentry.term.data", dir / "logentry.command.data", m_logs_);
+            co_mtx_.unlock();
         };
 
 

@@ -2,7 +2,6 @@
 
 #### [[中文说明]](https://github.com/cq-cdy/cRaft/tree/master/zh)
 ---
-
 * Based on the **lightweight and efficient design of C++ stack coroutines**
 * Supports **stable operation of distributed cluster** deployment, implementing effective fault tolerance mechanisms
 * Under the **pressure test of multi-concurrent synchronous logs**, it ensures the stability of the cluster in situations such as leader **downtime and going online**
@@ -136,14 +135,14 @@ int main(int argc, char **argv) {
 Of course, in addition to reading from the configuration file, you can also set some parameters at runtime. It is natural that the configuration items set at runtime have a higher priority than the configuration file:
 ```c++
     craft::Raft raft(&kv, &msgCh);
-    raft.setClusterAddress({"172.16.66.100:9667","172.16.66.101:9667","172.16.66.102:9667"});
-    raft.setRpcTimeOut(80);
-    raft.setHeatBeatTimeOut(150);
-    raft.setLeaderEelectionTimeOut(1500);
-    raft.setLogLevel(spdlog::level::debug);
-    //Make relevant settings before raft.launch()
+raft.setClusterAddress({"172.16.66.100:9667","172.16.66.101:9667","172.16.66.102:9667"});
+raft.setRpcTimeOut(80);
+raft.setHeatBeatTimeOut(150);
+raft.setLeaderEelectionTimeOut(1500);
+raft.setLogLevel(spdlog::level::debug);
+//Make relevant settings before raft.launch()
 
-    raft.launch();
+raft.launch();
 ```
 This is a basic distributed service deployment method. msgCh is the log entry submitted by the client to the cluster. After being synchronized to most nodes, ApplyMsg will be returned from msgCh, and snapshots at any time can be saved freely. The final decision was not to provide blocking in the craft service, so the blocking `sleep(INT32_MAX);` of the upper-layer service was needed. At the same time, regarding the use of the libgo coroutine framework, on top of craft, be sure to use `std::thread([] { co_sched. Start(1024); }).detach();` is placed in the first line to start the coroutine, and the snapshot backup between clusters supports automatic and asynchronous streaming transmission, so it can well cope with subsequent large snapshot files backup.
 
@@ -177,19 +176,19 @@ project(KVserver C CXX)
 include(common.cmake)
 ...
 foreach(_target KVServer client)
-   add_executable(${_target} "${_target}.cc")
-   target_link_libraries(${_target}
+add_executable(${_target} "${_target}.cc")
+target_link_libraries(${_target}
 
-             craft
-           absl::flags
-           absl::flags_parse
-           ${_REFLECTION}
-           ${_GRPC_GRPCPP}
-           ${_PROTOBUF_LIBPROTOBUF}
-           libgo
-           dl
-           pthread)
- endforeach()
+craft
+absl::flags
+absl::flags_parse
+${_REFLECTION}
+${_GRPC_GRPCPP}
+${_PROTOBUF_LIBPROTOBUF}
+libgo
+dl
+pthread)
+endforeach()
 ```
 You can then perform these steps on other nodes to start your own distributed system.
 

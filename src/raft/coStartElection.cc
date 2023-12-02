@@ -31,6 +31,7 @@ namespace craft {
         rf->co_mtx_.lock();
         if (rf->m_iskilled_) {
             spdlog::debug("raft is killed,return\n");
+            rf->co_mtx_.unlock();
             return;
         }
         if (rf->m_state_ == STATE::LEADER) {
@@ -42,18 +43,19 @@ namespace craft {
         int allCount = rf->m_clusterAddress_.size(), grantedCount = 1, resCount = 1;
         spdlog::debug("allCount ={} ",allCount);
         std::shared_ptr<co_chan<bool>> grantedChan(new co_chan<bool>(allCount - 1));
-        std::shared_ptr<RequestVoteArgs> args(new RequestVoteArgs);
-        args->set_candidateid(rf->m_me_);
-        args->set_term(rf->m_current_term_);
-        args->set_lastlogterm(rf->getLastLogTerm());
-        args->set_lastlogindex(rf->getLastLogIndex());
         rf->persist();
         rf->co_mtx_.unlock();
         for (int i = 0; i < allCount; i++) {
             if (i == rf->m_me_) {
                 continue;
             }
-            go [rf, i, grantedChan, args] {
+            go [rf, i, grantedChan] {
+                rf->co_mtx_.lock();
+                std::shared_ptr<RequestVoteArgs> args(new RequestVoteArgs);
+                args->set_candidateid(rf->m_me_);
+                args->set_term(rf->m_current_term_);
+                args->set_lastlogterm(rf->getLastLogTerm());
+                args->set_lastlogindex(rf->getLastLogIndex());
                 std::shared_ptr<RequestVoteReply> reply(new RequestVoteReply);
                 sendRequestVote(rf, i, args, reply);
                 bool is_voted = reply->votegranted();
@@ -62,7 +64,6 @@ namespace craft {
                     rf->m_electionTimer->reset(
                             getElectionTimeOut(rf->m_leaderEelectionTimeOut_));
                 }
-                rf->co_mtx_.lock();
                 if (reply->term() > rf->m_current_term_) {
                     rf->m_current_term_ = reply->term();
                     rf->changeToState(STATE::FOLLOWER);

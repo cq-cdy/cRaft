@@ -38,7 +38,7 @@ int main(int argc, char **argv) {
     std::thread([] { co_sched.Start(0,1024); }).detach();
 
     //set log level
-    spdlog::set_level(spdlog::level::info);
+    spdlog::set_level(spdlog::level::debug);
 
     //set snapshot and persist path
     std::string abs_path = "/home/cdy/code/projects/cRaft/.data";

@@ -29,7 +29,6 @@ namespace craft {
         m_rf_->m_logs_.push_back(logEntry);
         m_rf_->m_matchIndex_[m_rf_->m_me_] = index;
         m_rf_->m_nextIndex_[m_rf_->m_me_] = index + 1;
-        m_rf_->co_mtx_.unlock();
         //to client
         response->set_term(term);
         response->set_index(index);

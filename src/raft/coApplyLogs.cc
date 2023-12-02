@@ -39,27 +39,31 @@ namespace craft {
             // the deserialization method is rewritten
             // and implemented by the upper-layer service
             rf->m_persister_->deserialization(rf->m_persister_->snapshotFileName_.c_str());
-            rf->co_mtx_.unlock();
 
         } else if (rf->m_commitIndex_ <= rf->m_lastApplied_) {
+
             msgs.resize(0);
         } else {
             msgs.resize(rf->m_commitIndex_ - rf->m_lastApplied_);
             for (int i = rf->m_lastApplied_ + 1; i <= rf->m_commitIndex_; i++) {
                 msgs.push_back(ApplyMsg{true,
-                                        rf->m_logs_[i].command(),
+                                        {rf->m_logs_[i].command()},
                                         i});
             }
 
         }
-        if (msgs.empty()) { return; }
+        if (msgs.empty()) {
+            rf->co_mtx_.unlock();
+            return;
+        }
+        rf->co_mtx_.unlock();
+
         for (const auto &msg: msgs) {
             if (msg.commandValid) {
                 *rf->m_applyCh_ << msg;
             }
             rf->m_lastApplied_ = msg.commandIndex;
         }
-        rf->co_mtx_.unlock();
 
     }
 };

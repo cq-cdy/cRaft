@@ -6,12 +6,16 @@ int main(int argc, char **argv) {
     spdlog::set_level(spdlog::level::debug);
 
     static int count = 0;
+
+    //simple stress test
     for (int i = 0; i < 10; i++) {
         std::thread([&] {
             while (true) {
                 CRaftClient client;
-                ClientResult res = client.submitCommand("modify a data");
-                printf("count = %d \n", count++);
+                for(int j =0 ; j< 100000;j++){
+                    ClientResult res = client.submitCommand("modify a data");
+                    printf("count = %d \n", count++);
+                }
             }
         }).detach();
     }

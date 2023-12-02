@@ -12,6 +12,7 @@ namespace craft {
         response->set_term(m_rf_->m_current_term_);
         if (m_rf_->m_current_term_ > request->term()) {
             response->set_iscansendsnapfile(false);
+            m_rf_->co_mtx_.unlock();
             return Status::OK;
         }
         if (request->term() > m_rf_->m_current_term_ ||
@@ -24,6 +25,7 @@ namespace craft {
         }
         if (m_rf_->m_snapShotIndex >= request->lastincludeindex()) {
             response->set_iscansendsnapfile(false);
+            m_rf_->co_mtx_.unlock();
             return Status::OK;
         }
         response->set_iscansendsnapfile(true);
