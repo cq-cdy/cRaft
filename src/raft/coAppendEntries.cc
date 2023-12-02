@@ -45,7 +45,7 @@ namespace craft {
                             auto argsPack = getAppendLogs(i);
                             args->set_prevlogindex(std::get<0>(argsPack));
                             args->set_prevlogterm(std::get<1>(argsPack));
-                            for (auto m: std::get<2>(argsPack)) {
+                            for (const auto& m: std::get<2>(argsPack)) {
                                 auto a = args->add_entries();
                                 a->set_term(m.term());
                                 a->set_command(m.command());
