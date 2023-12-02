@@ -1,7 +1,7 @@
 #include <thread>
 #include "craft/raft.h"
 #include "regex"
-
+using namespace std::chrono;
 class KVServer : public craft::AbstractPersist {
 
 public:
@@ -35,7 +35,7 @@ private:
 int main(int argc, char **argv) {
 
     // start libgo coroutine
-    std::thread([] { co_sched.Start(0,1024); }).detach();
+    std::thread([] { co_sched.Start(0,0); }).detach();
 
     //set log level
     spdlog::set_level(spdlog::level::info);
@@ -51,10 +51,21 @@ int main(int argc, char **argv) {
     craft::Raft raft(&kv, &msgCh);
 
     raft.launch();
+    auto start = high_resolution_clock::now();
+    unsigned long long i = 0;
     while(true){
+        i++;
         ApplyMsg msg;
         msgCh >> msg;
-        spdlog::info(" get Apply msg [{},{},{}]", msg.commandValid, msg.command.content, msg.commandIndex);
+        auto end = high_resolution_clock::now();
+        duration<double> elapsed = end - start;
+        if (elapsed.count() >= 1.0) {
+            spdlog::info(" {} / per seconds");
+           //std::cout << "i++ executed " << i << " times in one second." << std::endl;
+            i = 0;
+            start = high_resolution_clock::now();
+        }
+        //spdlog::info(" get Apply msg [{},{},{}]", msg.commandValid, msg.command.content, msg.commandIndex);
         //raft.saveSnapShot(msg.commandIndex);
     }
 

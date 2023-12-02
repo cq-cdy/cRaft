@@ -4,11 +4,11 @@
 #include "craft/utils/commonUtil.h"
 
 namespace craft {
-    Raft::Raft(AbstractPersist *persister, co_chan <ApplyMsg> *applyCh)
+    Raft::Raft(AbstractPersist *persister, co_chan<ApplyMsg> *applyCh)
             : m_persister_(persister) {
 
         // defalut configuration file at [ ~/craft/craft.conf]
-        initFromConfig((std::string (getenv("HOME"))+"/craft/craft.conf"));
+        initFromConfig((std::string(getenv("HOME")) + "/craft/craft.conf"));
         m_peers_ = RpcClients::getInstance(m_clusterAddress_);
         m_nextIndex_.resize(m_peers_->numPeers());
         m_matchIndex_.resize(m_peers_->numPeers());
@@ -34,21 +34,21 @@ namespace craft {
         ConfigReader configReader(filename);
         auto configMap = configReader.getMap();
         auto ids = configMap.find("id");
-        if(ids == configMap.end()){
+        if (ids == configMap.end()) {
             spdlog::error("id not found in config file");
             exit(1);
-        }else{
+        } else {
             m_me_ = std::stoi(ids->second);
         }
         ids = configMap.find("HEART_BEAT_INTERVAL");
-        if(ids != configMap.end()){
+        if (ids != configMap.end()) {
             m_heatBeatInterVal = std::stoi(ids->second);
-            spdlog::info("find HEART_BEAT_INTERVAL in config= [{}]",m_heatBeatInterVal);
+            spdlog::info("find HEART_BEAT_INTERVAL in config= [{}]", m_heatBeatInterVal);
         }
         ids = configMap.find("ELECTION_TIMEOUT");
-        if(ids != configMap.end()){
+        if (ids != configMap.end()) {
             m_leaderEelectionTimeOut_ = std::stoi(ids->second);
-            spdlog::info("find ELECTION_TIMEOUT in config= [{}]",m_leaderEelectionTimeOut_);
+            spdlog::info("find ELECTION_TIMEOUT in config= [{}]", m_leaderEelectionTimeOut_);
         }
         ids = configMap.find("RPC_TIMEOUT");
         if (ids != configMap.end()) {
@@ -58,20 +58,20 @@ namespace craft {
 
         auto range = configMap.equal_range("servers");
         if (range.first != range.second) {
-            std::vector <std::string> servers;
+            std::vector<std::string> servers;
             for (auto it = range.first; it != range.second; it++) {
                 servers.push_back(it->second);
             }
             setClusterAddress(servers);
         }
-        if(m_clusterAddress_.empty()){
+        if (m_clusterAddress_.empty()) {
             spdlog::error("not found any server addr from [~/craft/craft.conf]");
             exit(1);
         }
         spdlog::info("local id = [{}]", m_me_);
     }
 
-    void Raft::setClusterAddress(const std::vector <std::string> &clusterAddress) {
+    void Raft::setClusterAddress(const std::vector<std::string> &clusterAddress) {
         for (const auto &addr: clusterAddress) {
             if (isValidIpPort(addr)) {
                 m_clusterAddress_.push_back(addr);
@@ -128,7 +128,8 @@ namespace craft {
         }
         m_state_ = toState;
 
-        spdlog::info("[{}]:{} from {} change to {},term = [{}]", m_me_, m_clusterAddress_[m_me_], stringState(fromState),
+        spdlog::info("[{}]:{} from {} change to {},term = [{}]", m_me_, m_clusterAddress_[m_me_],
+                     stringState(fromState),
                      stringState(toState), m_current_term_);
         if (m_StateChangedCh_->empty()) {
             *m_StateChangedCh_ << RETURN_TYPE::STATE_CHANGED;
@@ -137,8 +138,7 @@ namespace craft {
 
     bool Raft::saveSnapShot(int index) {
         co_mtx_.lock();
-        co_defer[this]
-        { co_mtx_.unlock(); };
+        co_defer [this] { co_mtx_.unlock(); };
         int snapshotIndex = m_snapShotIndex;
         if (snapshotIndex >= index) {
             spdlog::error("reject saveSnapShot,index = [{}],snapshotIndex = [{}]", index, snapshotIndex);
@@ -151,7 +151,8 @@ namespace craft {
         m_logs_[0].set_term(m_snapShotTerm);
         m_logs_[0].set_command("");
         m_persister_->serialization();
-        spdlog::info("[{}]:{} saveSnapShot success,index = [{}],snapshotIndex = [{}]", m_me_, m_clusterAddress_[m_me_], index,
+        spdlog::info("[{}]:{} saveSnapShot success,index = [{}],snapshotIndex = [{}]", m_me_, m_clusterAddress_[m_me_],
+                     index,
                      snapshotIndex);
         return true;
     }
@@ -283,7 +284,7 @@ namespace craft {
         int nextIndex = m_nextIndex_[peerId];
         int lastLogIndex = getLastLogIndex();
         int lastLogTerm = getLastLogTerm();
-        std::vector <LogEntry> logEntries;
+        std::vector<LogEntry> logEntries;
         if (nextIndex <= m_snapShotIndex || nextIndex > lastLogIndex) {
             return {lastLogIndex, lastLogTerm, logEntries};
         }
@@ -312,8 +313,9 @@ namespace craft {
         stream.close();
     }
 
-    void writePersist(std::string logtermFile, std::string logcommandFile, const std::vector <LogEntry>& logs) {
-        {
+    void writePersist(std::string logtermFile, std::string logcommandFile, const std::vector<LogEntry> &logs,
+                      bool is_truncate) {
+        if(is_truncate){
             // 清空文件
             std::ofstream logtermStream;
             std::ofstream logcommandStream;
@@ -341,7 +343,7 @@ namespace craft {
             spdlog::error("can not open file [{}]", logcommandFile);
         }
 
-        if(logs.size() >1){
+        if (logs.size() > 1) {
             for (int i = 1; i < logs.size(); i++) {
                 logtermStream << logs[i].term() << std::endl;
                 logcommandStream << logs[i].command() << std::endl;
@@ -351,10 +353,13 @@ namespace craft {
         logcommandStream.close();
     }
 
-    static std::vector <std::string> all_persist_files = {"commitIndex.data", "currentTerm.data", "lastlogindex.data",
-                                                          "lastSnapshotIndex.data", "lastSnapshotTerm.data",
-                                                          "logentry.command.data", "logentry.term.data",
-                                                          "votefor.data"};
+    static std::vector<std::string> all_persist_files = {"commitIndex.data", "currentTerm.data", "lastlogindex.data",
+                                                         "lastSnapshotIndex.data", "lastSnapshotTerm.data",
+                                                         "logentry.command.data", "logentry.term.data",
+                                                         "votefor.data"};
+
+    static int last_to_disk_index = 1;
+    static int last_to_disk_term = 1;
 
     void Raft::persist() {
         /*
@@ -362,8 +367,7 @@ namespace craft {
            "lastSnapshotIndex.data", "lastSnapshotTerm.data",
           "logentry.command.data", "logentry.term.data", "votefor.data"};
          */
-        go[this]
-        {
+        go [this] {
             std::filesystem::path dir = std::filesystem::path(m_persister_->absPersistPath_) / "persist";
             for (const auto &file: all_persist_files) {
                 check(dir / file);
@@ -375,7 +379,20 @@ namespace craft {
             auto snapShotTerm = m_snapShotTerm;
             auto votedFor = m_votedFor_;
             auto LastLogIndex = getLastLogIndex();
-            std::vector<LogEntry> logs = m_logs_;
+            std::vector<LogEntry> logs;
+            bool  is_truncate{false};
+            if (m_logs_.size() -1 > last_to_disk_index
+                && m_logs_.back().term() >= last_to_disk_term) {
+                logs.assign(m_logs_.begin() + last_to_disk_index+1, m_logs_.end());
+            } else if (last_to_disk_index == m_logs_.size() - 1
+                       && m_logs_.back().term() == last_to_disk_term) {
+                    logs.resize(1);
+            } else {
+                is_truncate = true;
+                logs = m_logs_;
+            }
+            last_to_disk_index = m_logs_.size() - 1 > 1 ? m_logs_.size() - 1:1;
+            last_to_disk_term = m_logs_.back().term() > 1 ? m_logs_.back().term():1;
             co_mtx_.unlock();
 
             writePersist(dir / "commitIndex.data", commitIndex);
@@ -384,7 +401,7 @@ namespace craft {
             writePersist(dir / "lastSnapshotTerm.data", snapShotTerm);
             writePersist(dir / "votefor.data", votedFor);
             writePersist(dir / "lastlogindex.data", LastLogIndex);
-            writePersist(dir / "logentry.term.data", dir / "logentry.command.data", logs);
+            writePersist(dir / "logentry.term.data", dir / "logentry.command.data", logs, is_truncate);
         };
 
 
