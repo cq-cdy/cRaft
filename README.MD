@@ -1,6 +1,6 @@
 # cRaft: Raft distributed consensus algorithm service framework based on C++ stacked coroutines
 
-#### [[中文说明]](https://github.com/cq-cdy/cRaft/tree/master/zh)
+#### [[中文文档]](https://github.com/cq-cdy/cRaft/tree/master/zh)
 ---
 * Based on the **lightweight and efficient design of C++ stack coroutines**
 * Supports **stable operation of distributed cluster** deployment, implementing effective fault tolerance mechanisms
@@ -27,7 +27,18 @@
 
 > spdlog Log library [[download link]](https://github.com/gabime/spdlog)
 
+## Performance
+Evaluation indicators: Cluster submission rate CSR (Cluster submission rate): The number of times per second that the client initiates log submission, and the cluster leader copies the log to all or most nodes before feeding it back to the client.
 
+> Since there are not enough hardware resources, the overall test is not very rigorous. We roughly tested the response rate.
+
+> The picture below is the test environment of the two configuration items this time.
+
+![](./img/cRaft-test.png)
+
+> Approximate test results of three cRaft nodes in two configuration environments:
+
+![](./img/CSR.png)
 ## Install and use
 1.After configuring the above environment, git clone
 ```
@@ -134,7 +145,7 @@ int main(int argc, char **argv) {
 ``` 
 Of course, in addition to reading from the configuration file, you can also set some parameters at runtime. It is natural that the configuration items set at runtime have a higher priority than the configuration file:
 ```c++
-    craft::Raft raft(&kv, &msgCh);
+craft::Raft raft(&kv, &msgCh);
 raft.setClusterAddress({"172.16.66.100:9667","172.16.66.101:9667","172.16.66.102:9667"});
 raft.setRpcTimeOut(80);
 raft.setHeatBeatTimeOut(150);
@@ -192,7 +203,7 @@ endforeach()
 ```
 You can then perform these steps on other nodes to start your own distributed system.
 
-#### 5.Next
+## Next
 Currently, the function of dynamically bringing nodes online and offline is not provided and will be considered in the future. The logs have not yet been placed on disk. Cluster communication may not be smooth during the second startup in a short period of time. This seems to be a feature of grpc. When I was debugging, every time If you have to change the port again, cluster communication will be no problem. I also tried to set up the following port reuse for grpc, but it didn't seem to work. I'm waiting for someone who knows to help point it out.
 ``` c++
 ...

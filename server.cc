@@ -60,8 +60,7 @@ int main(int argc, char **argv) {
         auto end = high_resolution_clock::now();
         duration<double> elapsed = end - start;
         if (elapsed.count() >= 1.0) {
-            spdlog::info(" {} / per seconds");
-           //std::cout << "i++ executed " << i << " times in one second." << std::endl;
+            spdlog::info(" {} / per seconds CSR",i);
             i = 0;
             start = high_resolution_clock::now();
         }

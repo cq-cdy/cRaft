@@ -31,15 +31,12 @@ private:
     std::multimap<std::string, std::string> configMap;
 
     void parseLine(const std::string &line) {
-        // 去除行首行尾的空格
         std::string trimmedLine = trim(line);
 
-        // 忽略注释行和空行
         if (trimmedLine.empty() || trimmedLine[0] == '#') {
             return;
         }
 
-        // 查找 '=' 的位置
         std::size_t pos = trimmedLine.find('=');
         if (pos != std::string::npos) {
             std::string key = trim(trimmedLine.substr(0, pos));

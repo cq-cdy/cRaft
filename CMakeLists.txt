@@ -4,8 +4,6 @@ project(cRaft C CXX)
 set(CMAKE_CXX_FLAGS "-g")
 include(common.cmake)
 
-set(LOCAL_TEST "ON") # or OFF then to lib.a
-
 include_directories(${PROJECT_SOURCE_DIR}/src)
 # # Protos Directory
 file(GLOB PROTO_INPUT "./src/protos/*.proto")
@@ -61,9 +59,6 @@ add_library(craft STATIC
         ${hw_proto_hdrs_all}
         ${RAFT_SRC}
 )
-
-IF (LOCAL_TEST STREQUAL "OFF")
-  message("NOT START LOCAL_TEST with server.cc client.cc")
   target_link_libraries(craft PUBLIC
           absl::flags
           absl::flags_parse
@@ -74,27 +69,10 @@ IF (LOCAL_TEST STREQUAL "OFF")
           dl
           pthread
   )
-else ()
-  message("START LOCAL_TEST with server.cc client.cc")
-  target_link_libraries(craft PUBLIC
-          ${_REFLECTION}
-          ${_GRPC_GRPCPP}
-          ${_PROTOBUF_LIBPROTOBUF}
-  )
 
-  # # Targets greeter_[async_](client|server)
-  foreach(_target server client)
+foreach(_target server client)
     add_executable(${_target} "${_target}.cc")
     target_link_libraries(${_target}
-
             craft
-            absl::flags
-            absl::flags_parse
-            ${_REFLECTION}
-            ${_GRPC_GRPCPP}
-            ${_PROTOBUF_LIBPROTOBUF}
-            libgo
-            dl
-            pthread)
-  endforeach()
-endif ()
+          )
+endforeach()
