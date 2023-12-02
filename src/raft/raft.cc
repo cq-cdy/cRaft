@@ -369,14 +369,22 @@ namespace craft {
                 check(dir / file);
             }
             co_mtx_.lock();
-            writePersist(dir / "commitIndex.data", m_commitIndex_);
-            writePersist(dir / "currentTerm.data", m_current_term_);
-            writePersist(dir / "lastSnapshotIndex.data", m_snapShotIndex);
-            writePersist(dir / "lastSnapshotTerm.data", m_snapShotTerm);
-            writePersist(dir / "votefor.data", m_votedFor_);
-            writePersist(dir / "lastlogindex.data", getLastLogIndex());
-            writePersist(dir / "logentry.term.data", dir / "logentry.command.data", m_logs_);
+            auto commitIndex = m_commitIndex_;
+            auto current_term = m_current_term_;
+            auto snapShotIndex = m_snapShotIndex;
+            auto snapShotTerm = m_snapShotTerm;
+            auto votedFor = m_votedFor_;
+            auto LastLogIndex = getLastLogIndex();
+            std::vector<LogEntry> logs = m_logs_;
             co_mtx_.unlock();
+
+            writePersist(dir / "commitIndex.data", commitIndex);
+            writePersist(dir / "currentTerm.data", current_term);
+            writePersist(dir / "lastSnapshotIndex.data", snapShotIndex);
+            writePersist(dir / "lastSnapshotTerm.data", snapShotTerm);
+            writePersist(dir / "votefor.data", votedFor);
+            writePersist(dir / "lastlogindex.data", LastLogIndex);
+            writePersist(dir / "logentry.term.data", dir / "logentry.command.data", logs);
         };
 
 
