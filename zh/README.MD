@@ -35,7 +35,7 @@ Raft原论文：[In Search of an Understandable Consensus Algorithm
 
 ![](../img/cRaft-test.png)
 
-> 在两种环境下的三台cRaft节点大致的测试结果：
+> 在两种环境下的三台和五台cRaft节点大致的测试结果：
 
 ![](../img/CSR.png)
 

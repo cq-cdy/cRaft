@@ -36,7 +36,7 @@ Evaluation indicators: Cluster submission rate CSR (Cluster submission rate): Th
 
 ![](./img/cRaft-test.png)
 
-> Approximate test results of three cRaft nodes in two configuration environments:
+> Approximate test results of three and five cRaft nodes in two configuration environments:
 
 ![](./img/CSR.png)
 ## Install and use

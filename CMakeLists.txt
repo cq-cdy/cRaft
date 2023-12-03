@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.2)
 
 project(cRaft C CXX)
-set(CMAKE_CXX_FLAGS "-g")
+#set(CMAKE_CXX_FLAGS "-g")
 include(common.cmake)
 
 include_directories(${PROJECT_SOURCE_DIR}/src)
@@ -11,22 +11,17 @@ get_filename_component(protos_h_cc "./protos_h_cc" ABSOLUTE)
 get_filename_component(protos_h_cc "./src/rpc" ABSOLUTE)
 
 message(protos_h_cc = ${protos_h_cc})
-
 # Set the output paths
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
-
 # Go through every proto file for processing
 foreach(hw_proto ${PROTO_INPUT})
   get_filename_component(hw_proto_path "${hw_proto}" PATH)
-
   get_filename_component(base_name_we ${hw_proto} NAME_WE)
-
   set(hw_proto_srcs "${protos_h_cc}/${base_name_we}.pb.cc")
   set(hw_proto_hdrs "${protos_h_cc}/${base_name_we}.pb.h")
   set(hw_grpc_srcs "${protos_h_cc}/${base_name_we}.grpc.pb.cc")
   set(hw_grpc_hdrs "${protos_h_cc}/${base_name_we}.grpc.pb.h")
-
   add_custom_command(
           OUTPUT "${hw_proto_srcs}" "${hw_proto_hdrs}" "${hw_grpc_srcs}" "${hw_grpc_hdrs}"
           COMMAND ${_PROTOBUF_PROTOC}
@@ -69,7 +64,6 @@ add_library(craft STATIC
           dl
           pthread
   )
-
 foreach(_target server client)
     add_executable(${_target} "${_target}.cc")
     target_link_libraries(${_target}
