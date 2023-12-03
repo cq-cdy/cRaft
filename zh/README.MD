@@ -167,11 +167,16 @@ int main(int argc, char **argv) {
 ``` c++
 #include "craft/client.h"
 
-
 int main(int argc, char **argv) {
     spdlog::set_level(spdlog::level::debug);
+    std::string command =
+            "{"
+            "\"id\":\"adksra4312768dsdhk\""
+            ",\"op\":\"delete\""
+            ",\"from\":\"172.16.66.100:12345\""
+            "}";
     CRaftClient client;
-    ClientResult res = client.submitCommand("modify a data");
+    ClientResult res = client.submitCommand(command);
     if (!res.is_timeout) {
         spdlog::info("success submit a log,term = [{}],index = [{}]", res.term, res.index);
     } else {
@@ -179,7 +184,6 @@ int main(int argc, char **argv) {
     }
     return 0;
 }
-
 ```
 客户端对gRPC请求的封装，客户端暂时并没有像服务端那样提供运行时更改相关参数的API，因此目前客户端只能从配置文件读取相关信息，通过ClientResult返回值拿到所添加的日志的term和index
 
