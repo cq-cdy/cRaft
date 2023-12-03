@@ -122,7 +122,7 @@ private:
 int main(int argc, char **argv) {
 
     // start libgo coroutine
-    std::thread([] { co_sched.Start(0,1024); }).detach();
+    std::thread([] { co_sched.Start(0,0); }).detach();
 
     //set log level
     spdlog::set_level(spdlog::level::info);
@@ -157,7 +157,7 @@ raft.setLogLevel(spdlog::level::debug);
 
 raft.launch();
 ```
-This is a basic distributed service deployment method. msgCh is the log entry submitted by the client to the cluster. After being synchronized to most nodes, ApplyMsg will be returned from msgCh, and snapshots at any time can be saved freely. The final decision was not to provide blocking in the craft service, so the blocking `sleep(INT32_MAX);` of the upper-layer service was needed. At the same time, regarding the use of the libgo coroutine framework, on top of craft, be sure to use `std::thread([] { co_sched. Start(1024); }).detach();` is placed in the first line to start the coroutine, and the snapshot backup between clusters supports automatic and asynchronous streaming transmission, so it can well cope with subsequent large snapshot files backup.
+This is a basic distributed service deployment method. msgCh is the log entry submitted by the client to the cluster. After being synchronized to most nodes, ApplyMsg will be returned from msgCh, and snapshots at any time can be saved freely. The final decision was not to provide blocking in the craft service, so the blocking `sleep(INT32_MAX);` of the upper-layer service was needed. At the same time, regarding the use of the libgo coroutine framework, on top of craft, be sure to use `std::thread([] { co_sched. Start(0,0); }).detach();` is placed in the first line to start the coroutine, and the snapshot backup between clusters supports automatic and asynchronous streaming transmission, so it can well cope with subsequent large snapshot files backup.
 
 #### 3.Client usage
 touch  `client.cc`

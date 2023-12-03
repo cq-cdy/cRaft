@@ -1,6 +1,7 @@
 #include <thread>
 #include "craft/raft.h"
 #include "regex"
+#include "atomic"
 using namespace std::chrono;
 class KVServer : public craft::AbstractPersist {
 
@@ -47,26 +48,27 @@ int main(int argc, char **argv) {
     std::string snapFileName = "KVServer.snap";
     KVServer kv(abs_path, snapFileName);
 
-    co_chan<ApplyMsg> msgCh(10000);
+    co_chan<ApplyMsg> msgCh(100000);
     craft::Raft raft(&kv, &msgCh);
 
     raft.launch();
     auto start = high_resolution_clock::now();
-    unsigned long long i = 0;
-    while(true){
-        i++;
-        ApplyMsg msg;
-        msgCh >> msg;
-        auto end = high_resolution_clock::now();
-        duration<double> elapsed = end - start;
-        if (elapsed.count() >= 1.0) {
-            spdlog::info(" {} / per seconds CSR",i);
-            i = 0;
-            start = high_resolution_clock::now();
-        }
-        //spdlog::info(" get Apply msg [{},{},{}]", msg.commandValid, msg.command.content, msg.commandIndex);
-        //raft.saveSnapShot(msg.commandIndex);
+    std::atomic<long long int> i  =0 ;
+    for (int k = 0; k < 8; k++) {
+        std::thread([&] {
+            while (true) {
+                i++;
+                ApplyMsg msg;
+                msgCh >> msg;
+                auto end = high_resolution_clock::now();
+                spdlog::info("i = [{}]",i++);
+                // spdlog::info(" get Apply msg [{},{},{}]", msg.commandValid,
+                // msg.command.content, msg.commandIndex);
+                // raft.saveSnapShot(msg.commandIndex);
+            }
+        }).detach();
     }
+
 
     sleep(INT32_MAX);
 }

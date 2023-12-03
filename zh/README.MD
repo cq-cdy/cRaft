@@ -1,6 +1,6 @@
 ## cRaft:基于C++有栈协程的Raft分布式一致性共识算法服务框架
 
-> 该项目开源，可随意更改和使用，当使用或更改该项目发布于其他地方时请表明出处，详情见`LICEENSE`文件。https://github.com/cq-cdy/cRaft
+> 该项目开源，可随意更改和使用，当使用或更改该项目发布于其他地方时请表明出处(https://github.com/cq-cdy/cRaft)，详情见`LICEENSE`文件。
 
 #### [[English document here]](https://github.com/cq-cdy/cRaft)
 ----
@@ -125,7 +125,7 @@ private:
 int main(int argc, char **argv) {
 
     // start libgo coroutine
-    std::thread([] { co_sched.Start(0,1024); }).detach();
+    std::thread([] { co_sched.Start(0,0); }).detach();
 
     //set log level
     spdlog::set_level(spdlog::level::info);
@@ -151,16 +151,16 @@ int main(int argc, char **argv) {
 当然，除了从配置文件读取之外，也可以在运行时设置一些参数，运行时设置的配置项优先级高于配置文件是理所应当的：
 ```c++
     craft::Raft raft(&kv, &msgCh);
-    raft.setClusterAddress({"172.16.66.100:9667","172.16.66.101:9667","172.16.66.102:9667"});
-    raft.setRpcTimeOut(80);
-    raft.setHeatBeatTimeOut(150);
-    raft.setLeaderEelectionTimeOut(1500);
-    raft.setLogLevel(spdlog::level::debug);
-    //Make relevant settings before raft.launch()
+raft.setClusterAddress({"172.16.66.100:9667","172.16.66.101:9667","172.16.66.102:9667"});
+raft.setRpcTimeOut(80);
+raft.setHeatBeatTimeOut(150);
+raft.setLeaderEelectionTimeOut(1500);
+raft.setLogLevel(spdlog::level::debug);
+//Make relevant settings before raft.launch()
 
-    raft.launch();
+raft.launch();
 ```
-这是基本的分布式服务部署的方式，其中msgCh是客户端向集群提交的日志条目被同步到大部分节点上后，会从msgCh返回得到ApplyMsg,可以自由的保存任意时刻的快照。最后决定并没有在craft服务中提供阻塞，因此需要上层服务的阻塞 sleep(INT32_MAX);，同时关于libgo协程框架的使用，在craft之上，请务必将  std::thread([] { co_sched.Start(1024); }).detach();放在第一行开启协程，并且**集群间的快照备份是支持自动的，采用的异步流式传输，因此能够很好的应对后续快照大文件的备份。**
+这是基本的分布式服务部署的方式，其中msgCh是客户端向集群提交的日志条目被同步到大部分节点上后，会从msgCh返回得到ApplyMsg,可以自由的保存任意时刻的快照。最后决定并没有在craft服务中提供阻塞，因此需要上层服务的阻塞 sleep(INT32_MAX);，同时关于libgo协程框架的使用，在craft之上，请务必将  std::thread([] { co_sched.Start(0,0); }).detach();放在第一行开启协程，并且**集群间的快照备份是支持自动的，采用的异步流式传输，因此能够很好的应对后续快照大文件的备份。**
 
 #### 3.客户端的使用
 创建 `client.cc`
@@ -199,19 +199,19 @@ include(common.cmake)
 
 ...
 foreach(_target KVServer client)
-   add_executable(${_target} "${_target}.cc")
-   target_link_libraries(${_target}
+add_executable(${_target} "${_target}.cc")
+target_link_libraries(${_target}
 
-             craft
-           absl::flags
-           absl::flags_parse
-           ${_REFLECTION}
-           ${_GRPC_GRPCPP}
-           ${_PROTOBUF_LIBPROTOBUF}
-           libgo
-           dl
-           pthread)
- endforeach()
+craft
+absl::flags
+absl::flags_parse
+${_REFLECTION}
+${_GRPC_GRPCPP}
+${_PROTOBUF_LIBPROTOBUF}
+libgo
+dl
+pthread)
+endforeach()
 ```
 然后可以在其他节点上执行这些步骤，就可以开启属于自己的分布式系统。
 
