@@ -1,6 +1,6 @@
 ## cRaft:基于C++有栈协程的Raft分布式一致性共识算法服务框架
 
-> 该项目开源，可随意更改和使用，当使用或更改该项目发布于其他地方时请表明出处(https://github.com/cq-cdy/cRaft)，详情见`LICEENSE`文件。
+> 该项目开源，可随意更改和使用，当使用或更改该项目发布于其他地方时请表明出处(https://github.com/cq-cdy/cRaft) ,详情见`LICEENSE`文件。
 
 #### [[English document here]](https://github.com/cq-cdy/cRaft)
 ----
