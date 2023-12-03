@@ -1,5 +1,7 @@
 # cRaft: Raft distributed consensus algorithm service framework based on C++ stacked coroutines
 
+> This project is open source and can be changed and used at will. Please indicate the source when using or changing the project and publishing it elsewhere,see the `LICEENSE` document for details.https://github.com/cq-cdy/cRaft
+
 #### [[中文文档]](https://github.com/cq-cdy/cRaft/tree/master/zh)
 ---
 * Based on the **lightweight and efficient design of C++ stack coroutines**

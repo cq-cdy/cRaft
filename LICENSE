@@ -1,0 +1,26 @@
+Copyright (c) 2023 [cdy]. All rights reserved.
+
+该项目开源，可随意更改使用，当使用或更改该项目发布于其他地方时请表明出处。https://github.com/cq-cdy/cRaft
+
+This project is open source and can be modified and used at will.
+Please indicate the source when using or modifying this project and publishing it elsewhere.
+https://github.com/cq-cdy/cRaft
+
+免责声明
+----------
+本项目提供的代码和文档无任何形式的明示或暗示保证。项目作者或版权持有人不对任何由于本项目的使用或无法使用而产生的
+直接、间接、偶然、特殊、惩罚性或后果性损害（包括但不限于替代商品或服务的购买；使用、数据或利润的损失；或业务中断）承担责任，
+即使被告知此类损害的可能性。作者或版权持有人不承担任何与本项目相关的，或因使用本项目而产生的，任何形式的责任或义务。
+使用者在使用本项目时，须自行承担所有风险，包括但不限于对计算机系统的损害或数据丢失的风险。
+在使用本项目时，请尊重项目所涉及的知识产权。
+
+Disclaimer
+----------
+The code and documentation provided by this project come without any express or implied warranty of any kind. 
+The project author or copyright holder shall not be liable for any liability arising out of the use or inability to use this project.
+LIABILITY FOR DIRECT, INDIRECT, INCIDENTAL, SPECIAL, PUNITIVE, OR CONSEQUENTIAL DAMAGES
+ (INCLUDING, WITHOUT LIMITATION, THE PURCHASE OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION),
+EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. The author or copyright holder assumes no responsibility or liability of 
+any kind related to this project or arising from its use.
+Users must bear all risks when using this project, including but not limited to the risk of damage to computer systems or data loss.
+When using this project, please respect the intellectual property rights involved in the project.

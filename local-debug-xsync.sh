@@ -1,6 +1,4 @@
 #!/bin/bash
-
-
 source_dir="./"
 
 backup_dirs=( "../rafts/0" "../rafts/1" "../rafts/2" "../rafts/3" "../rafts/4")
