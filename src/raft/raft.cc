@@ -164,20 +164,39 @@ namespace craft {
             ptr = nullptr;
         }
     }
+    ServerCallResult Raft::submitCommand(std::string command) {
+        int index = -1;
+        int term =  -1;
+        bool isLeader =  false;
+        co_mtx_.lock();
+        co_defer[this]{
+            co_mtx_.unlock();
+        };
+        if(m_state_ !=STATE::LEADER){
+            return {index,term,isLeader};
+        }
+        term = m_current_term_;
+        index = getLastLogIndex();
+        LogEntry logEntry;
+        logEntry.set_term(term);
+        logEntry.set_command(command);
+        m_logs_.push_back(logEntry);
+        m_matchIndex_[m_me_] = index;
+        m_nextIndex_[m_me_] = index + 1;
+        return {index,term,isLeader};
+    }
 
     std::string Raft::stringState(STATE state) {
         std::string a;
-        do {
-            if (state == STATE::LEADER) {
-                a = "LEADER";
-            } else if (state == STATE::CANDIDATE) {
-                a = "CANDIDATE";
-            } else if (state == STATE::FOLLOWER) {
-                a = "FOLLOWER";
-            } else {
-                a = "UNKNOWN";
-            }
-        } while (false);
+        if (state == STATE::LEADER) {
+            a = "LEADER";
+        } else if (state == STATE::CANDIDATE) {
+            a = "CANDIDATE";
+        } else if (state == STATE::FOLLOWER) {
+            a = "FOLLOWER";
+        } else {
+            a = "UNKNOWN";
+        }
         return a;
     }
 
@@ -406,6 +425,7 @@ namespace craft {
 
 
     }
+
 
 
 }  // namespace craft

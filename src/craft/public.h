@@ -45,6 +45,11 @@ struct ClientResult {
     int index{};
     bool is_timeout{};
 };
+struct ServerCallResult{
+    int index{};
+    int term{};
+    bool isLeader{};
+};
 static uint getElectionTimeOut(uint timeout) {
     std::random_device rd;
     std::mt19937 gen(rd());

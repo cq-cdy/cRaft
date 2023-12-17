@@ -36,7 +36,7 @@ namespace craft {
         void loadFromPersist();
 
         void changeToState(STATE toState) ;
-
+        ServerCallResult submitCommand(std::string command );
         void initFromConfig(const std::string& filename) ;
         void setClusterAddress(const std::vector<std::string> &clusterAddress) ;
         void setLeaderEelectionTimeOut(uint millisecond) ;
@@ -51,7 +51,7 @@ namespace craft {
         int getLastLogTerm() const ;
         
         // use to debug
-        std::string stringState(STATE state);
+        static std::string stringState(STATE state);
 
     public:
         //some util function
