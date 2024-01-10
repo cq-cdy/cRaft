@@ -72,7 +72,10 @@ namespace craft {
     }
 
     void Raft::setClusterAddress(const std::vector<std::string> &clusterAddress) {
+        spdlog::warn(" setClusterAddress(const std::vector<std::string> &clusterAddress) this function had bug ,the setting is unuseful");
+        return ;
         for (const auto &addr: clusterAddress) {
+            spdlog::error("ip port [{}] is invalid", addr);
             if (isValidIpPort(addr)) {
                 m_clusterAddress_.push_back(addr);
             } else {
