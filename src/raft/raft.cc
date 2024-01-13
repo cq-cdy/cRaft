@@ -24,9 +24,7 @@ namespace craft {
         m_electionTimer = new Timer();
         m_applyTimer = new Timer();
         m_appendEntriesTimer = new Timer();
-
         loadFromPersist();
-        co_launchRpcSevices();
     }
 
     void Raft::initFromConfig(const std::string &filename) {
@@ -72,10 +70,9 @@ namespace craft {
     }
 
     void Raft::setClusterAddress(const std::vector<std::string> &clusterAddress) {
-        spdlog::warn(" setClusterAddress(const std::vector<std::string> &clusterAddress) this function had bug ,the setting is unuseful");
-        return ;
+        m_clusterAddress_.clear();
         for (const auto &addr: clusterAddress) {
-            spdlog::error("ip port [{}] is invalid", addr);
+            //spdlog::error("ip port [{}] is invalid", addr);
             if (isValidIpPort(addr)) {
                 m_clusterAddress_.push_back(addr);
             } else {
@@ -102,6 +99,9 @@ namespace craft {
     }
 
     void Raft::launch() {
+
+        // launch local RpcSevices
+        co_launchRpcSevices();
 
         /* main:logic:start with coroutines */
         co_appendAentries();

@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
     std::thread([] { co_sched.Start(0,0); }).detach();
 
     //set log level
-    spdlog::set_level(spdlog::level::info);
+    spdlog::set_level(spdlog::level::debug);
 
     //set snapshot and persist path
     std::string abs_path = "/home/cdy/code/projects/cRaft/.data";
@@ -50,7 +50,6 @@ int main(int argc, char **argv) {
 
     co_chan<ApplyMsg> msgCh(100000);
     craft::Raft raft(&kv, &msgCh);
-
     raft.launch();
     auto start = high_resolution_clock::now();
     std::atomic<long long int> i  =0 ;
