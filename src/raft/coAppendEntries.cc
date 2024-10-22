@@ -53,6 +53,13 @@ namespace craft {
                             std::shared_ptr<AppendEntriesReply> reply(
                                     new AppendEntriesReply);
                             bool isCallOk = sendToAppendEntries(this, i, args, reply);
+                            auto js = this->base_json();
+                            js["action"] = "appendEntries";
+                            js["to"] = i;
+                            js["is_ok"] = isCallOk;
+                            go[this,js](){
+                                this->m_monitor_->record_batch<MonitorTask>({new RaftRunTimeTask(js)});
+                            };
                             if (!isCallOk) {
                                 co_mtx_.unlock();
                                 return;
