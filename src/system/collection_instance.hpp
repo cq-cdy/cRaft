@@ -49,13 +49,12 @@ struct CollectionInstance {
         std::lock_guard<std::mutex> lk2(push_mtx_, std::adopt_lock);
         if (file_) {
             if(mem_data_ == nullptr){
-                return
+                return;
             }
             for (const auto& data : *mem_data_) {
                 *file_ << data << "\n";
             }
             file_->flush();
-            file_->close();
         }
     }
     void push(T data) noexcept {

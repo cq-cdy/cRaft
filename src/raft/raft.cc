@@ -3,6 +3,7 @@
 #include "craft/public.h"
 #include "craft/utils/commonUtil.h"
 #include "filesystem"
+#include "system/json.hpp"
 
 namespace craft {
 
@@ -36,7 +37,7 @@ Raft::Raft(AbstractPersist *persister, co_chan<ApplyMsg> *applyCh)
     m_appendEntriesTimer = new Timer();
 
     m_monitor_ = new MonitorInstance<std::string>(
-        "/home/cdy1/code/project/cRaft/.data/system_data", 1 << 7);
+        "/home/cdy/code/projects/cRaft/.data/system_data");
     loadFromPersist();
 }
 
@@ -233,6 +234,7 @@ Raft::~Raft() {
     deleter(m_StateChangedCh_);
     deleter(m_applyTimer);
     deleter(isCompleteSnapFileInstallCh_);
+    
 }
 
 void Raft::loadFromPersist() {

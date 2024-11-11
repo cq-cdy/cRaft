@@ -1,11 +1,11 @@
-#include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
 
 #include <thread>
 
+#include "./src/craft/raft.h"
 #include "atomic"
-#include "craft/raft.h"
+#include "craft/high_availability.h"
 #include "regex"
 using namespace std::chrono;
 static craft::Raft *rft_p = nullptr;
@@ -27,15 +27,18 @@ class CoreDumpTask : public MonitorTask {
    private:
     craft::Raft *m_rft_p_{};
 };
-// 错误处理函数
-void signalHandler(int signum) {
-    printf("yes in core dump\n");
-    if (rft_p == nullptr) {
-        _Exit(signum);
-    }
-    rft_p->m_monitor_->flush();
 
-    _Exit(signum);
+void coredump_handle(int n) {
+    printf(" in core dump\n");
+    if (rft_p == nullptr) {
+        printf("core dump raft ptr is null !\n");
+        return;
+    }
+
+    auto js = rft_p->base_json();
+    rft_p->m_monitor_->record_batch<MonitorTask>({new CoreDumpTask(rft_p)});
+    rft_p->m_monitor_->flush();
+    printf(" coredump flushed !!!\n");
 }
 
 class KVServer : public craft::AbstractPersist {
@@ -67,7 +70,7 @@ class KVServer : public craft::AbstractPersist {
     std::map<std::string, std::string> kv_datas_;
 };
 
-int main(int argc, char **argv) {
+void run() {
     // start libgo coroutine
     std::thread([] { co_sched.Start(0, 0); }).detach();
 
@@ -75,20 +78,28 @@ int main(int argc, char **argv) {
     spdlog::set_level(spdlog::level::info);
 
     // set snapshot and persist path
-    std::string abs_path = "/home/cdy1/code/project/cRaft/.data";
+    std::string abs_path = "/home/cdy/code/projects/cRaft/.data";
 
     // set snapshot file name
     std::string snapFileName = "KVServer.snap";
     KVServer kv(abs_path, snapFileName);
 
     co_chan<ApplyMsg> msgCh(100000);
-    craft::Raft raft(&kv, &msgCh);
-    rft_p = &raft;
-    signal(SIGSEGV, signalHandler);  // 捕获段错误
-    signal(SIGFPE, signalHandler);   // 捕获浮点异常
-    signal(SIGINT, signalHandler);   // 捕获浮点异常
-    raft.setLogLevel(spdlog::level::debug);
-    raft.launch();
+    rft_p = new craft::Raft(&kv, &msgCh);
+    // struct sigaction sa;
+    // sa.sa_handler = &coredump_handle;
+    // sigemptyset(&sa.sa_mask);
+    // sa.sa_flags = SA_RESTART | SA_NOCLDSTOP | SA_RESETHAND|SA_NODEFER;
+    // if (sigaction(SIGCHLD, &sa, 0) == -1) {
+    //     perror("sigaction failed");
+    //     exit(1);
+    // }
+    signal(SIGSEGV, coredump_handle);  // 捕获段错误
+    signal(SIGFPE, coredump_handle);   // 捕获浮点异常
+    signal(SIGINT, coredump_handle);   // 捕获浮点异常
+    signal(SIGABRT, coredump_handle);
+    rft_p->setLogLevel(spdlog::level::info);
+    rft_p->launch();
     // auto start = high_resolution_clock::now();
     // std::atomic<long long int> i  =0 ;
     // for (int k = 0; k < 8; k++) {
@@ -108,4 +119,10 @@ int main(int argc, char **argv) {
     // }
 
     sleep(INT32_MAX);
+}
+int main(int argc, char **argv) {
+   
+    HighAvai *high_avai = HighAvai::getInstance(run, 2);
+    high_avai->setRestartCount(10 /* defalut count = 5；*/);
+    high_avai->start(argc, argv);
 }
