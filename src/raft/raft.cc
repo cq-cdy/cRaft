@@ -7,13 +7,20 @@
 
 namespace craft {
 
-    nlohmann::json Raft::base_json()  {
+nlohmann::json Raft::base_json() {
     nlohmann::json data{};
+    data["id"] = this->m_me_;
     data["state"] = this->stringState(this->m_state_);
     data["term"] = this->m_current_term_;
     data["logsize"] = this->m_logs_.size();
     data["ip_index"] = std::to_string(this->m_me_) + ":" +
                        std::to_string((this->m_peers_)->numPeers());
+    data["commitIndex"] = this->m_commitIndex_;
+    data["votedFor"] = this->m_votedFor_;
+    data["snapShotIndex"] = this->m_snapShotIndex;
+    data["snapShotTerm"] = this->m_snapShotTerm;
+    data["nextIndex"] = this->m_nextIndex_;
+    data["lastLogIndex"] = this->getLastLogIndex();
     return data;
 }
 Raft::Raft(AbstractPersist *persister, co_chan<ApplyMsg> *applyCh)
@@ -39,6 +46,12 @@ Raft::Raft(AbstractPersist *persister, co_chan<ApplyMsg> *applyCh)
     m_monitor_ = new MonitorInstance<std::string>(
         "/home/cdy/code/projects/cRaft/.data/system_data");
     loadFromPersist();
+
+    nlohmann::json js{};
+    js["role"] = "state";
+    js["system_state"] = m_monitor_->get_system_base_state_json();
+    js["raft_state"] = base_json();
+    m_monitor_->flush_json(js);
 }
 
 void Raft::initFromConfig(const std::string &filename) {
@@ -124,13 +137,7 @@ void Raft::launch() {
 
 void Raft::changeToState(STATE toState) {
     auto fromState = m_state_;
-    auto js =  this->base_json();
-    js["action"] = "state_change";
-    js["from"] = stringState(m_state_);
-    js["to"]= stringState(toState);
-    go[this,js](){
-        this->m_monitor_->record_batch<MonitorTask>({new RaftRunTimeTask(js)});
-    };
+    auto timestamp = m_monitor_->timestamp();
     if (toState == STATE::FOLLOWER) {
         m_appendEntriesTimer->stop();
     } else if (toState == STATE::CANDIDATE) {
@@ -150,7 +157,17 @@ void Raft::changeToState(STATE toState) {
         spdlog::critical("change to unkown toState");
     }
     m_state_ = toState;
-
+    go[this, fromState, toState, timestamp] {
+        nlohmann::json js{};
+        js["role"] = "action";
+        js["action"] = "change_state";
+        js["timestamp"] = timestamp;
+        js["system_state"] = m_monitor_->get_system_base_state_json();
+        js["raft_state"] = base_json();
+        js["from"] = stringState(fromState);
+        js["to"] = stringState(toState);
+        m_monitor_->flush_json(js);
+    };
     spdlog::info("[{}]:{} from {} change to {},term = [{}]", m_me_,
                  m_clusterAddress_[m_me_], stringState(fromState),
                  stringState(toState), m_current_term_);
@@ -234,7 +251,7 @@ Raft::~Raft() {
     deleter(m_StateChangedCh_);
     deleter(m_applyTimer);
     deleter(isCompleteSnapFileInstallCh_);
-    
+    deleter(m_monitor_);
 }
 
 void Raft::loadFromPersist() {

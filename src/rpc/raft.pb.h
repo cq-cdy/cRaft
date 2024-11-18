@@ -857,11 +857,27 @@ class RequestVoteArgs final :
   // accessors -------------------------------------------------------
 
   enum : int {
+    kTimestampFieldNumber = 6,
     kTermFieldNumber = 1,
     kCandidateIdFieldNumber = 2,
     kLastLogIndexFieldNumber = 3,
     kLastLogTermFieldNumber = 4,
+    kMeFieldNumber = 5,
   };
+  // string timestamp = 6;
+  void clear_timestamp();
+  const std::string& timestamp() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_timestamp(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_timestamp();
+  PROTOBUF_NODISCARD std::string* release_timestamp();
+  void set_allocated_timestamp(std::string* timestamp);
+  private:
+  const std::string& _internal_timestamp() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_timestamp(const std::string& value);
+  std::string* _internal_mutable_timestamp();
+  public:
+
   // int32 term = 1;
   void clear_term();
   int32_t term() const;
@@ -898,6 +914,15 @@ class RequestVoteArgs final :
   void _internal_set_lastlogterm(int32_t value);
   public:
 
+  // int32 me = 5;
+  void clear_me();
+  int32_t me() const;
+  void set_me(int32_t value);
+  private:
+  int32_t _internal_me() const;
+  void _internal_set_me(int32_t value);
+  public:
+
   // @@protoc_insertion_point(class_scope:RequestVoteArgs)
  private:
   class _Internal;
@@ -905,10 +930,12 @@ class RequestVoteArgs final :
   template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr timestamp_;
   int32_t term_;
   int32_t candidateid_;
   int32_t lastlogindex_;
   int32_t lastlogterm_;
+  int32_t me_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_raft_2eproto;
 };
@@ -1038,6 +1065,8 @@ class RequestVoteReply final :
   enum : int {
     kTermFieldNumber = 1,
     kVoteGrantedFieldNumber = 2,
+    kLastLogIndexFieldNumber = 3,
+    kLastLogTermFieldNumber = 4,
   };
   // int32 term = 1;
   void clear_term();
@@ -1057,6 +1086,24 @@ class RequestVoteReply final :
   void _internal_set_votegranted(bool value);
   public:
 
+  // int32 lastLogIndex = 3;
+  void clear_lastlogindex();
+  int32_t lastlogindex() const;
+  void set_lastlogindex(int32_t value);
+  private:
+  int32_t _internal_lastlogindex() const;
+  void _internal_set_lastlogindex(int32_t value);
+  public:
+
+  // int32 lastLogTerm = 4;
+  void clear_lastlogterm();
+  int32_t lastlogterm() const;
+  void set_lastlogterm(int32_t value);
+  private:
+  int32_t _internal_lastlogterm() const;
+  void _internal_set_lastlogterm(int32_t value);
+  public:
+
   // @@protoc_insertion_point(class_scope:RequestVoteReply)
  private:
   class _Internal;
@@ -1066,6 +1113,8 @@ class RequestVoteReply final :
   typedef void DestructorSkippable_;
   int32_t term_;
   bool votegranted_;
+  int32_t lastlogindex_;
+  int32_t lastlogterm_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_raft_2eproto;
 };
@@ -1356,6 +1405,7 @@ class AppendEntriesArgs final :
 
   enum : int {
     kEntriesFieldNumber = 5,
+    kTimestampFieldNumber = 7,
     kTermFieldNumber = 1,
     kLeaderIdFieldNumber = 2,
     kPrevLogIndexFieldNumber = 3,
@@ -1379,6 +1429,20 @@ class AppendEntriesArgs final :
   ::LogEntry* add_entries();
   const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::LogEntry >&
       entries() const;
+
+  // string timestamp = 7;
+  void clear_timestamp();
+  const std::string& timestamp() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_timestamp(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_timestamp();
+  PROTOBUF_NODISCARD std::string* release_timestamp();
+  void set_allocated_timestamp(std::string* timestamp);
+  private:
+  const std::string& _internal_timestamp() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_timestamp(const std::string& value);
+  std::string* _internal_mutable_timestamp();
+  public:
 
   // int32 term = 1;
   void clear_term();
@@ -1433,6 +1497,7 @@ class AppendEntriesArgs final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::LogEntry > entries_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr timestamp_;
   int32_t term_;
   int32_t leaderid_;
   int32_t prevlogindex_;
@@ -1565,11 +1630,26 @@ class AppendEntriesReply final :
   // accessors -------------------------------------------------------
 
   enum : int {
+    kTimestampFieldNumber = 5,
     kTermFieldNumber = 1,
     kSuccessFieldNumber = 2,
     kNextLogTermFieldNumber = 3,
     kNextLogIndexFieldNumber = 4,
   };
+  // string timestamp = 5;
+  void clear_timestamp();
+  const std::string& timestamp() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_timestamp(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_timestamp();
+  PROTOBUF_NODISCARD std::string* release_timestamp();
+  void set_allocated_timestamp(std::string* timestamp);
+  private:
+  const std::string& _internal_timestamp() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_timestamp(const std::string& value);
+  std::string* _internal_mutable_timestamp();
+  public:
+
   // int32 term = 1;
   void clear_term();
   int32_t term() const;
@@ -1613,6 +1693,7 @@ class AppendEntriesReply final :
   template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr timestamp_;
   int32_t term_;
   bool success_;
   int32_t nextlogterm_;
@@ -2237,6 +2318,77 @@ inline void RequestVoteArgs::set_lastlogterm(int32_t value) {
   // @@protoc_insertion_point(field_set:RequestVoteArgs.lastLogTerm)
 }
 
+// int32 me = 5;
+inline void RequestVoteArgs::clear_me() {
+  me_ = 0;
+}
+inline int32_t RequestVoteArgs::_internal_me() const {
+  return me_;
+}
+inline int32_t RequestVoteArgs::me() const {
+  // @@protoc_insertion_point(field_get:RequestVoteArgs.me)
+  return _internal_me();
+}
+inline void RequestVoteArgs::_internal_set_me(int32_t value) {
+  
+  me_ = value;
+}
+inline void RequestVoteArgs::set_me(int32_t value) {
+  _internal_set_me(value);
+  // @@protoc_insertion_point(field_set:RequestVoteArgs.me)
+}
+
+// string timestamp = 6;
+inline void RequestVoteArgs::clear_timestamp() {
+  timestamp_.ClearToEmpty();
+}
+inline const std::string& RequestVoteArgs::timestamp() const {
+  // @@protoc_insertion_point(field_get:RequestVoteArgs.timestamp)
+  return _internal_timestamp();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void RequestVoteArgs::set_timestamp(ArgT0&& arg0, ArgT... args) {
+ 
+ timestamp_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:RequestVoteArgs.timestamp)
+}
+inline std::string* RequestVoteArgs::mutable_timestamp() {
+  std::string* _s = _internal_mutable_timestamp();
+  // @@protoc_insertion_point(field_mutable:RequestVoteArgs.timestamp)
+  return _s;
+}
+inline const std::string& RequestVoteArgs::_internal_timestamp() const {
+  return timestamp_.Get();
+}
+inline void RequestVoteArgs::_internal_set_timestamp(const std::string& value) {
+  
+  timestamp_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, value, GetArenaForAllocation());
+}
+inline std::string* RequestVoteArgs::_internal_mutable_timestamp() {
+  
+  return timestamp_.Mutable(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, GetArenaForAllocation());
+}
+inline std::string* RequestVoteArgs::release_timestamp() {
+  // @@protoc_insertion_point(field_release:RequestVoteArgs.timestamp)
+  return timestamp_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArenaForAllocation());
+}
+inline void RequestVoteArgs::set_allocated_timestamp(std::string* timestamp) {
+  if (timestamp != nullptr) {
+    
+  } else {
+    
+  }
+  timestamp_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), timestamp,
+      GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (timestamp_.IsDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited())) {
+    timestamp_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:RequestVoteArgs.timestamp)
+}
+
 // -------------------------------------------------------------------
 
 // RequestVoteReply
@@ -2279,6 +2431,46 @@ inline void RequestVoteReply::_internal_set_votegranted(bool value) {
 inline void RequestVoteReply::set_votegranted(bool value) {
   _internal_set_votegranted(value);
   // @@protoc_insertion_point(field_set:RequestVoteReply.voteGranted)
+}
+
+// int32 lastLogIndex = 3;
+inline void RequestVoteReply::clear_lastlogindex() {
+  lastlogindex_ = 0;
+}
+inline int32_t RequestVoteReply::_internal_lastlogindex() const {
+  return lastlogindex_;
+}
+inline int32_t RequestVoteReply::lastlogindex() const {
+  // @@protoc_insertion_point(field_get:RequestVoteReply.lastLogIndex)
+  return _internal_lastlogindex();
+}
+inline void RequestVoteReply::_internal_set_lastlogindex(int32_t value) {
+  
+  lastlogindex_ = value;
+}
+inline void RequestVoteReply::set_lastlogindex(int32_t value) {
+  _internal_set_lastlogindex(value);
+  // @@protoc_insertion_point(field_set:RequestVoteReply.lastLogIndex)
+}
+
+// int32 lastLogTerm = 4;
+inline void RequestVoteReply::clear_lastlogterm() {
+  lastlogterm_ = 0;
+}
+inline int32_t RequestVoteReply::_internal_lastlogterm() const {
+  return lastlogterm_;
+}
+inline int32_t RequestVoteReply::lastlogterm() const {
+  // @@protoc_insertion_point(field_get:RequestVoteReply.lastLogTerm)
+  return _internal_lastlogterm();
+}
+inline void RequestVoteReply::_internal_set_lastlogterm(int32_t value) {
+  
+  lastlogterm_ = value;
+}
+inline void RequestVoteReply::set_lastlogterm(int32_t value) {
+  _internal_set_lastlogterm(value);
+  // @@protoc_insertion_point(field_set:RequestVoteReply.lastLogTerm)
 }
 
 // -------------------------------------------------------------------
@@ -2500,6 +2692,57 @@ inline void AppendEntriesArgs::set_leadercommit(int32_t value) {
   // @@protoc_insertion_point(field_set:AppendEntriesArgs.leaderCommit)
 }
 
+// string timestamp = 7;
+inline void AppendEntriesArgs::clear_timestamp() {
+  timestamp_.ClearToEmpty();
+}
+inline const std::string& AppendEntriesArgs::timestamp() const {
+  // @@protoc_insertion_point(field_get:AppendEntriesArgs.timestamp)
+  return _internal_timestamp();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void AppendEntriesArgs::set_timestamp(ArgT0&& arg0, ArgT... args) {
+ 
+ timestamp_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:AppendEntriesArgs.timestamp)
+}
+inline std::string* AppendEntriesArgs::mutable_timestamp() {
+  std::string* _s = _internal_mutable_timestamp();
+  // @@protoc_insertion_point(field_mutable:AppendEntriesArgs.timestamp)
+  return _s;
+}
+inline const std::string& AppendEntriesArgs::_internal_timestamp() const {
+  return timestamp_.Get();
+}
+inline void AppendEntriesArgs::_internal_set_timestamp(const std::string& value) {
+  
+  timestamp_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, value, GetArenaForAllocation());
+}
+inline std::string* AppendEntriesArgs::_internal_mutable_timestamp() {
+  
+  return timestamp_.Mutable(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, GetArenaForAllocation());
+}
+inline std::string* AppendEntriesArgs::release_timestamp() {
+  // @@protoc_insertion_point(field_release:AppendEntriesArgs.timestamp)
+  return timestamp_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArenaForAllocation());
+}
+inline void AppendEntriesArgs::set_allocated_timestamp(std::string* timestamp) {
+  if (timestamp != nullptr) {
+    
+  } else {
+    
+  }
+  timestamp_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), timestamp,
+      GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (timestamp_.IsDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited())) {
+    timestamp_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:AppendEntriesArgs.timestamp)
+}
+
 // -------------------------------------------------------------------
 
 // AppendEntriesReply
@@ -2582,6 +2825,57 @@ inline void AppendEntriesReply::_internal_set_nextlogindex(int32_t value) {
 inline void AppendEntriesReply::set_nextlogindex(int32_t value) {
   _internal_set_nextlogindex(value);
   // @@protoc_insertion_point(field_set:AppendEntriesReply.nextLogIndex)
+}
+
+// string timestamp = 5;
+inline void AppendEntriesReply::clear_timestamp() {
+  timestamp_.ClearToEmpty();
+}
+inline const std::string& AppendEntriesReply::timestamp() const {
+  // @@protoc_insertion_point(field_get:AppendEntriesReply.timestamp)
+  return _internal_timestamp();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void AppendEntriesReply::set_timestamp(ArgT0&& arg0, ArgT... args) {
+ 
+ timestamp_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:AppendEntriesReply.timestamp)
+}
+inline std::string* AppendEntriesReply::mutable_timestamp() {
+  std::string* _s = _internal_mutable_timestamp();
+  // @@protoc_insertion_point(field_mutable:AppendEntriesReply.timestamp)
+  return _s;
+}
+inline const std::string& AppendEntriesReply::_internal_timestamp() const {
+  return timestamp_.Get();
+}
+inline void AppendEntriesReply::_internal_set_timestamp(const std::string& value) {
+  
+  timestamp_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, value, GetArenaForAllocation());
+}
+inline std::string* AppendEntriesReply::_internal_mutable_timestamp() {
+  
+  return timestamp_.Mutable(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, GetArenaForAllocation());
+}
+inline std::string* AppendEntriesReply::release_timestamp() {
+  // @@protoc_insertion_point(field_release:AppendEntriesReply.timestamp)
+  return timestamp_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArenaForAllocation());
+}
+inline void AppendEntriesReply::set_allocated_timestamp(std::string* timestamp) {
+  if (timestamp != nullptr) {
+    
+  } else {
+    
+  }
+  timestamp_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), timestamp,
+      GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (timestamp_.IsDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited())) {
+    timestamp_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:AppendEntriesReply.timestamp)
 }
 
 // -------------------------------------------------------------------

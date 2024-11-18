@@ -19,9 +19,39 @@ class MonitorInstance {
         collection_instance_ptr_ = new CollectionInstance<DATA_T>(
             path, max_size, max_io_thread_count_, data_file_name);
     }
-    
-    void flush(){
-        if(collection_instance_ptr_){
+    inline static std::string timestamp() noexcept {
+        auto now = std::chrono::high_resolution_clock::now();
+
+        auto timestamp_microseconds =
+            std::chrono::duration_cast<std::chrono::microseconds>(
+                now.time_since_epoch())
+                .count();
+        return std::to_string(timestamp_microseconds);
+    }
+    void flush_json(nlohmann::json data) { this->push(std::move(data)); }
+    nlohmann::json get_system_base_state_json() {
+        nlohmann::json data{};
+        static std::vector<MonitorTask*> tasks{
+            &disk_task_,      &cpu_task_,     &mem_task_,
+            &thread_fd_task_, &network_task_, &ctx_swtich_task_};
+        for (auto task_ptr_ : tasks) {
+            if (task_ptr_ == nullptr) {
+                continue;
+            }
+            auto role = task_ptr_->describe();
+            auto __data = task_ptr_->get_pid_data();
+            if (__data.size() > 1) {
+                data[role]["process"] = __data;
+            }
+            __data = task_ptr_->get_host_data();
+            if (__data.size() > 1) {
+                data[role]["host"] = __data;
+            }
+        }
+        return data;
+    }
+    void flush() {
+        if (collection_instance_ptr_) {
             collection_instance_ptr_->flush();
         }
     }
@@ -41,7 +71,8 @@ class MonitorInstance {
 
     template <class Handler = std::nullptr_t>
         requires std::is_convertible<Handler, MonitorTask>::value ||
-                 std::is_same<Handler, std::nullptr_t>::value || std::is_same<Handler, MonitorTask>::value
+                 std::is_same<Handler, std::nullptr_t>::value ||
+                 std::is_same<Handler, MonitorTask>::value
     void record_batch(std::vector<Handler*> handlers) {
         nlohmann::json data{};
         data["type"] = "batch";
@@ -67,7 +98,7 @@ class MonitorInstance {
             if (__data.size() > 1) {
                 data[role]["host"] = __data;
             }
-            if(task_ptr_->is_tmp){
+            if (task_ptr_->is_tmp) {
                 delete task_ptr_;
             }
         }
@@ -90,17 +121,9 @@ class MonitorInstance {
         }
     }
     void push(nlohmann::json data) {
-        data["timestamp"] = timestamp();
-        this->collection_instance_ptr_->push(data.dump(4));
-    }
-    inline static std::string timestamp() noexcept {
-        auto now = std::chrono::high_resolution_clock::now();
-
-        auto timestamp_microseconds =
-            std::chrono::duration_cast<std::chrono::microseconds>(
-                now.time_since_epoch())
-                .count();
-        return std::to_string(timestamp_microseconds);
+        if (data.size() > 1) {
+            this->collection_instance_ptr_->push(std::move(data.dump(4)));
+        }
     }
 
    private:

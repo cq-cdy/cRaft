@@ -13,13 +13,14 @@ int main(int argc, char **argv) {
             ",\"from\":\"172.16.66.100:12345\""
             "}";
     //simple stress test
-    for (int i = 0; i < 16; i++) {
+    for (int i = 0; i < 2; i++) {
         std::thread([&] {
             while (true) {
                 CRaftClient client;
-                for (int j = 0; j < 1000000; j++) {
+                for (int j = 0; j < 1000; j++) {
                     ClientResult res = client.submitCommand(command);
                     printf("count = %d \n", count++);
+                    sleep(1);
                 }
             }
         }).detach();

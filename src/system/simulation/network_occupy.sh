@@ -4,7 +4,17 @@ if [[ $EUID -ne 0 ]]; then
    echo "This script must be run as root" 
    exit 1
 fi
-max_bandwidth=$(ethtool eth0 | grep "Speed:" | awk '{print $2}' | tr -d 'Mb/s')
+
+# 获取本机的网络接口名称
+interface=$(ip link show | grep -Eo 'ens0|ens33|eth0' | head -n 1)
+
+if [[ $interface == "ens0" ]]; then
+    interface="eth0"
+elif [[ $interface == "ens33" ]]; then
+    interface="ens33"
+fi
+
+max_bandwidth=$(ethtool $interface | grep "Speed:" | awk '{print $2}' | tr -d 'Mb/s')
 
 
 if ! [[ $max_bandwidth =~ ^[0-9]+$ ]]; then
@@ -26,10 +36,10 @@ while true; do
   echo "Target bandwidth in bps: $target_bandwidth"
 
   # 随机生成持续时间（3-6秒）
-  duration=$((RANDOM % 4 + 3))
+  duration=$((RANDOM % 3 + 3))
 
-  # 随机生成下一次占用的间隔时间（3-5秒）
-  interval=$((RANDOM % 3 + 10))
+  # 随机生成下一次占用的间隔时间（10-25秒）
+  interval=$((RANDOM % 10 + 15))
 
   # 启动iperf服务器
   echo "Starting iperf server..."

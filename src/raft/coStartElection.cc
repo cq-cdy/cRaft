@@ -3,7 +3,8 @@
 
 #include "craft/peers.h"
 #include "craft/raft.h"
-
+#include "system/json.hpp"
+#include "system/monitor/raft_runtime_task.hpp"
 namespace craft {
 
 void sendRequestVote(Raft *rf, int serverId,
@@ -19,6 +20,15 @@ void Raft::co_startElection() {
             RETURN_TYPE type_;
             (m_electionTimer->m_chan_) >> type_;
             if (type_ == RETURN_TYPE::TIME_OUT) {
+                // nlohmann::json js{};
+                // js["role"] = "action";
+                // js["action"] = "election_timeout";
+                // js["timestamp"] = m_monitor_->timestamp();
+                // js["me"] = this->m_me_;
+                // js["host_term"] = this->m_current_term_;
+                // js["lastlogterm"] = this->getLastLogTerm();
+                // js["lastlogindex"] = this->getLastLogIndex();
+                // this->m_monitor_->flush_json(js);
                 startElection(this);
             } else {
                 spdlog::debug("not found type\n");
@@ -46,6 +56,15 @@ void startElection(Raft *rf) {
     std::shared_ptr<co_chan<bool>> grantedChan(new co_chan<bool>(allCount - 1));
     rf->persist();
     rf->co_mtx_.unlock();
+    auto timestamp = rf->m_monitor_->timestamp();
+    go[rf, timestamp]() {
+        nlohmann::json js{};
+        js["role"] = "state";
+        js["timestamp"] = timestamp;
+        js["system_state"] = rf->m_monitor_->get_system_base_state_json();
+        js["raft_state"] = rf->base_json();
+        rf->m_monitor_->flush_json(js);
+    };
     for (int i = 0; i < allCount; i++) {
         if (i == rf->m_me_) {
             continue;
@@ -53,20 +72,31 @@ void startElection(Raft *rf) {
         go[rf, i, grantedChan] {
             rf->co_mtx_.lock();
             std::shared_ptr<RequestVoteArgs> args(new RequestVoteArgs);
+            auto timestamp = rf->m_monitor_->timestamp();
             args->set_candidateid(rf->m_me_);
             args->set_term(rf->m_current_term_);
             args->set_lastlogterm(rf->getLastLogTerm());
             args->set_lastlogindex(rf->getLastLogIndex());
+            args->set_timestamp(rf->m_monitor_->timestamp());
             std::shared_ptr<RequestVoteReply> reply(new RequestVoteReply);
+            auto start = std::chrono::system_clock::now();
             sendRequestVote(rf, i, args, reply);
-
+            auto end = std::chrono::system_clock::now();
+            auto duration =
+                std::chrono::duration_cast<std::chrono::seconds>(end - start);
             bool is_voted = reply->votegranted();
-            nlohmann::json js = rf->base_json();
-            js["action"] = "vote";
-            js["vote_for"] = i;
-            js["is_voted"] = is_voted;
-            go[rf,js](){
-                rf->m_monitor_->record_batch<MonitorTask>({new RaftRunTimeTask(js)});
+            go[rf, is_voted, reply, i, duration, timestamp]() {
+                nlohmann::json js{};
+                js["role"] = "action";
+                js["action"] = "requestVote";
+                js["timestamp"] = timestamp;
+                js["me"] = rf->m_me_;
+                js["peer"] = i;
+                js["is_ok"] = is_voted;
+                js["duration"] = duration.count();
+                js["host_term"] = rf->m_current_term_;
+                js["peer_term"] = reply->term();
+                rf->m_monitor_->flush_json(js);
             };
             *grantedChan << is_voted;  //  default false ,if rpc  success true;
             if (is_voted) {
@@ -104,6 +134,7 @@ void startElection(Raft *rf) {
         }
     }
     rf->co_mtx_.unlock();
+    rf->m_monitor_->record_batch<>({});
 }
 
 void sendRequestVote(Raft *rf, int serverId,

@@ -1,14 +1,21 @@
 #include "libgo/defer/defer.h"
 #include "craft/public.h"
 #include "craft/startRpcService.h"
-
+#include "system/json.hpp"
 namespace craft {
     bool checkLog(Raft *rf, const ::RequestVoteArgs *request);
 
     Status RpcServiceImpl::requestVoteRPC(::grpc::ServerContext *context,
                                           const ::RequestVoteArgs *request,
                                           ::RequestVoteReply *response) {
-
+        nlohmann::json js{};
+        js["role"] = "action";
+        js["action"] = "receive_request_vote";
+        js["timestamp"] = request->timestamp();
+        js["me"] = m_rf_->m_me_;
+        js["peer"] = request->candidateid();
+        js["host_term"] = m_rf_->m_current_term_;
+        js["peer_term"] = request->term();
         m_rf_->co_mtx_.lock();
         response->set_votegranted(false);
         response->set_term(m_rf_->m_current_term_);
@@ -50,6 +57,8 @@ namespace craft {
             }
 
         } while (false);
+        js["voted_for"] = m_rf_->m_votedFor_;
+        js["is_voted"] = response->votegranted();
         m_rf_->co_mtx_.unlock();
         return Status::OK;
     }

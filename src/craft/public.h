@@ -12,6 +12,7 @@
 #include "fstream"
 #include "filesystem"
 #include "spdlog/spdlog.h"
+#include "system/json.hpp"
 
 using uint = unsigned int;
 
