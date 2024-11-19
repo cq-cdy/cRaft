@@ -43,8 +43,20 @@ Raft::Raft(AbstractPersist *persister, co_chan<ApplyMsg> *applyCh)
     m_applyTimer = new Timer();
     m_appendEntriesTimer = new Timer();
 
-    m_monitor_ = new MonitorInstance<std::string>(
-        "/home/cdy/code/projects/cRaft/.data/system_data");
+    const char *raft_home_path = std::getenv("RAFT_HOME_PATH");
+    if (raft_home_path == nullptr) {
+        spdlog::error(
+            "RAFT_HOME_PATH is not set. please run 'source setenv.sh' "
+            "first");
+        exit(1);
+    }
+    std::string monitor_data_path =
+        std::string(raft_home_path) + "/.data/system_data";
+    // 如果不存在就创建
+    if (!std::filesystem::exists(monitor_data_path)) {
+        std::filesystem::create_directories(monitor_data_path);
+    }
+    m_monitor_ = new MonitorInstance<std::string>(monitor_data_path);
     loadFromPersist();
 
     nlohmann::json js{};
@@ -64,6 +76,11 @@ void Raft::initFromConfig(const std::string &filename) {
         exit(1);
     } else {
         m_me_ = std::stoi(ids->second);
+    }
+    const char * local_id = std::getenv("RAFT_TEST_ID");
+    if (local_id != nullptr) {
+        m_me_ = std::stoi(local_id);
+        spdlog::info("RUN IN LOCAL TEST MODE,RAFT_TEST_ID = [{}]", m_me_);
     }
     ids = configMap.find("HEART_BEAT_INTERVAL");
     if (ids != configMap.end()) {

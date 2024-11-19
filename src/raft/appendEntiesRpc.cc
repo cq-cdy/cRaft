@@ -124,7 +124,7 @@ Status RpcServiceImpl::appendEntries(::grpc::ServerContext *context,
     action_js["receiveLogBytes"] = receiveLogBytes;
 
     state_js["role"] = "state";
-    state_js["timestamp"] = request->timestamp();
+    state_js["timestamp"] =m_rf_->m_monitor_->timestamp(); // here not use request->timestamp() best
     state_js["system_state"] = m_rf_->m_monitor_->get_system_base_state_json();
     state_js["raft_state"] = m_rf_->base_json();
     m_rf_->m_monitor_->flush_json(state_js);

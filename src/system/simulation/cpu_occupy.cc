@@ -22,7 +22,7 @@ void run() {
     std::vector<std::thread> threads;
     while (true) {
         for (int i = 0; i < num_cores; i++) {
-            if (get_random_between(0, 10) < 4) {
+            if (get_random_between(0, 10) < 3) {
                 threads.push_back(std::thread([]() { cpu_occupy(); }));
             } else {
                 threads.push_back(std::thread(

@@ -1,12 +1,12 @@
-#include <stdlib.h>
-#include <unistd.h>
 
+#include <unistd.h>
+#include <cstdlib> 
 #include <thread>
 
 #include "./src/craft/raft.h"
 #include "atomic"
 #include "craft/high_availability.h"
-#include "regex"
+#include <cstdlib> 
 using namespace std::chrono;
 static craft::Raft *rft_p = nullptr;
 class CoreDumpTask : public MonitorTask {
@@ -29,12 +29,9 @@ class CoreDumpTask : public MonitorTask {
 };
 
 void coredump_handle(int n) {
-    printf(" in core dump\n");
     if (rft_p == nullptr) {
-        printf("core dump raft ptr is null !\n");
         return;
     }
-
     auto js = rft_p->base_json();
     rft_p->m_monitor_->record_batch<MonitorTask>({new CoreDumpTask(rft_p)});
     rft_p->m_monitor_->flush();
@@ -75,10 +72,15 @@ void run() {
     std::thread([] { co_sched.Start(0, 0); }).detach();
 
     // set log level
-    spdlog::set_level(spdlog::level::info);
+    spdlog::set_level(spdlog::level::debug);
 
     // set snapshot and persist path
-    std::string abs_path = "/home/cdy/code/projects/cRaft/.data";
+    const char * homePath = std::getenv("RAFT_HOME_PATH");
+    if (homePath == nullptr) {
+        spdlog::error("RAFT_HOME_PATH is not set. please run 'source setenv.sh' first");
+        exit(1);
+    }
+    std::string abs_path = std::string(homePath) + "/.data";
 
     // set snapshot file name
     std::string snapFileName = "KVServer.snap";
@@ -121,8 +123,8 @@ void run() {
     sleep(INT32_MAX);
 }
 int main(int argc, char **argv) {
-   run();
-    // HighAvai *high_avai = HighAvai::getInstance(run, 2);
-    // high_avai->setRestartCount(10 /* defalut count = 5；*/);
-    // high_avai->start(argc, argv);
+   
+    HighAvai *high_avai = HighAvai::getInstance(run, 2);
+    high_avai->setRestartCount(10 /* defalut count = 5；*/);
+    high_avai->start(argc, argv);
 }

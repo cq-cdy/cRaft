@@ -31,6 +31,14 @@ void Raft::co_appendAentries() {
                 spdlog::debug("in co_appendAentries state:[{}],my term is [{}]",
                               stringState(m_state_), m_current_term_);
 
+                nlohmann::json js{};
+                js["role"] = "state";
+                js["timestamp"] = this->m_monitor_->timestamp();
+                js["system_state"] =
+                    this->m_monitor_->get_system_base_state_json();
+                js["raft_state"] = this->base_json();
+                this->m_monitor_->flush_json(js);
+
                 for (int i = 0; i < this->m_peers_->numPeers(); i++) {
                     if (i == this->m_me_) {
                         continue;
@@ -75,9 +83,7 @@ void Raft::co_appendAentries() {
                                 std::chrono::milliseconds>(end - start)
                                 .count();
                         js["timestamp"] = timestamp;
-                        go[this, js]() {
-                            m_monitor_->flush_json(js);
-                        };
+                        go[this, js]() { m_monitor_->flush_json(js); };
                         if (!isCallOk) {
                             co_mtx_.unlock();
                             return;
@@ -164,6 +170,14 @@ void handleAppendFaild(Raft *rf, int serverId,
 }
 
 void sendInstallSnapshotToPeer(Raft *rf, int serverId) {
+    nlohmann::json js{};
+    js["role"] = "action";
+    js["action"] = "sendInstallSnapshotToPeer";
+    js["peer"] = serverId;
+    js["me"] = rf->m_me_;
+    auto timestamp = rf->m_monitor_->timestamp();
+    js["timestamp"] = timestamp;
+
     InstallSnapshotArgs args;
     args.set_term(rf->m_current_term_);
     args.set_leaderid(rf->m_me_);
@@ -181,7 +195,17 @@ void sendInstallSnapshotToPeer(Raft *rf, int serverId) {
         std::chrono::system_clock::now() +
         std::chrono::milliseconds(rf->m_rpcTimeOut_);
     context.set_deadline(deadline);
+
+    auto start = std::chrono::system_clock::now();
     Status ok = stubs[serverId]->installSnapshot(&context, args, &reply);
+    auto end = std::chrono::system_clock::now();
+    auto duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    js["duration"] = duration.count();
+    js["is_ok"] = ok.ok();
+    js["peer_term"] = reply.term();
+    rf->m_monitor_->flush_json(js);
+
     if (ok.ok() && reply.iscansendsnapfile()) {
         go[rf, serverId] {
             // Send snapshot files via grpc streaming protocol

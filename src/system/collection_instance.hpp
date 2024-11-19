@@ -54,6 +54,7 @@ struct CollectionInstance {
             for (const auto& data : *mem_data_) {
                 *file_ << data << "\n";
             }
+            file_->operator<<(std::endl);
             file_->flush();
         }
     }
