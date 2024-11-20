@@ -1,5 +1,5 @@
 # cRaft: Raft distributed consensus algorithm service framework based on C++ stacked coroutines
-
+## note: airaft这个分支是用来构建 DeepLearning for Raft 的实验
 > This project is open source and can be changed and used at will. Please indicate the source when using or changing the project and publishing it elsewhere(https://github.com/cq-cdy/cRaft) ,see the `LICENSE` document for details.
 
 #### [[中文文档]](https://github.com/cq-cdy/cRaft/tree/master/zh)
