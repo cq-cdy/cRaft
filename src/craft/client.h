@@ -30,6 +30,7 @@ public:
                 spdlog::error("addr error:{}",addr);
                 exit(1);
             }
+            spdlog::info("peer addr:{}",addr);
         }
     }
     ClientResult submitCommand(std::string command ,uint timeout  = 200 /*ms*/){
