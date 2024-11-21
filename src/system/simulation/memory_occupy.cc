@@ -30,12 +30,12 @@ void run() {
             delete memory;
             memory = new vector<char>();
             last_size = 0;
-            random_sleep(3,10);
+            random_sleep(3, 10);
             continue;
         }
 
         double t =
-            ((double)get_random_between(15, 25));  // 每次申请15-25%的可用内存
+            ((double)get_random_between(10, 15));  // 每次申请15-25%的可用内存
         double random_percent = t / 100;
         long long alloc_size = (avail_mem * random_percent) + last_size;
         if (alloc_size > avail_mem) {
@@ -43,12 +43,12 @@ void run() {
             delete memory;
             memory = new vector<char>();
             last_size = 0;
-            random_sleep(3,10);
+            random_sleep(3, 10);
             continue;
         }
         // cout << "Allocating " << alloc_size << " bytes" << endl;
 
-        if (get_random_between(0, 10) >= 3) {  // 60%的概率分配内存
+        if (get_random_between(0, 10) >= 5) {  // 60%的概率分配内存
             try {
                 memory->resize(alloc_size);
                 (*memory)[memory->size() - 1] = 1;
@@ -59,10 +59,8 @@ void run() {
                 last_size = 0;
                 continue;
             }
-        } else {  // 70%的概率收缩内存
-            memory->resize(
-                (unsigned int)(memory->size() /
-                               get_random_between(20, 25)));  // 随机收缩比例
+        } else {                // 70%的概率收缩内存
+            memory->resize(0);  // 随机收缩比例
             last_size = 0;
         }
         last_size = memory->size();

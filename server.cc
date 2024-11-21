@@ -1,12 +1,12 @@
 
 #include <unistd.h>
-#include <cstdlib> 
+
+#include <cstdlib>
 #include <thread>
 
 #include "./src/craft/raft.h"
 #include "atomic"
 #include "craft/high_availability.h"
-#include <cstdlib> 
 using namespace std::chrono;
 static craft::Raft *rft_p = nullptr;
 class CoreDumpTask : public MonitorTask {
@@ -75,9 +75,10 @@ void run() {
     spdlog::set_level(spdlog::level::debug);
 
     // set snapshot and persist path
-    const char * homePath = std::getenv("RAFT_HOME_PATH");
+    const char *homePath = std::getenv("RAFT_HOME_PATH");
     if (homePath == nullptr) {
-        spdlog::error("RAFT_HOME_PATH is not set. please run 'source setenv.sh' first");
+        spdlog::error(
+            "RAFT_HOME_PATH is not set. please run 'source setenv.sh' first");
         exit(1);
     }
     std::string abs_path = std::string(homePath) + "/.data";
@@ -123,8 +124,8 @@ void run() {
     sleep(INT32_MAX);
 }
 int main(int argc, char **argv) {
-   
-    HighAvai *high_avai = HighAvai::getInstance(run, 2);
-    high_avai->setRestartCount(10 /* defalut count = 5；*/);
-    high_avai->start(argc, argv);
+    run();
+    // HighAvai *high_avai = HighAvai::getInstance(run, 2);
+    // high_avai->setRestartCount(10 /* defalut count = 5；*/);
+    // high_avai->start(argc, argv);
 }
