@@ -101,7 +101,7 @@ void run() {
     signal(SIGFPE, coredump_handle);   // 捕获浮点异常
     signal(SIGINT, coredump_handle);   // 捕获浮点异常
     signal(SIGABRT, coredump_handle);
-    rft_p->setLogLevel(spdlog::level::debug);
+    rft_p->setLogLevel(spdlog::level::info);
     rft_p->launch();
     // auto start = high_resolution_clock::now();
     // std::atomic<long long int> i  =0 ;
@@ -124,8 +124,8 @@ void run() {
     sleep(INT32_MAX);
 }
 int main(int argc, char **argv) {
-    run();
-    // HighAvai *high_avai = HighAvai::getInstance(run, 2);
-    // high_avai->setRestartCount(10 /* defalut count = 5；*/);
-    // high_avai->start(argc, argv);
+     run();
+//    HighAvai *high_avai = HighAvai::getInstance(run, 2);
+//   high_avai->setRestartCount(5 /* defalut count = 5；*/);
+//   high_avai->start(argc, argv);
 }

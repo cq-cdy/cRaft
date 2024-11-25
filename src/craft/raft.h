@@ -99,12 +99,6 @@ class Raft final : public noncopyable {
     co_chan<RETURN_TYPE> *isCompleteSnapFileInstallCh_;
 
     MonitorInstance<std::string> *m_monitor_ = nullptr;
-    std::atomic<uint> vote_for_count_{0};
-    std::atomic<uint> be_vote_{0};
-    std::atomic<uint> appendEntry_send_count_{0};
-    std::atomic<uint> appendEntry_recv_count_{0};
-    std::atomic<uint> state_change_count_{0};
-    std::atomic<uint> tranfer_snapfile_send_count{0};
-    std::atomic<uint> tranfer_snapfile_recv_count{0};
+    uint saveSnapShotSize_ = 15;
 };
 }  // namespace craft

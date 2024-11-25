@@ -38,18 +38,18 @@ void Raft::co_appendAentries() {
                     this->m_monitor_->get_system_base_state_json();
                 js["raft_state"] = this->base_json();
                 this->m_monitor_->flush_json(js);
-
+                auto timestamp = m_monitor_->timestamp();
                 for (int i = 0; i < this->m_peers_->numPeers(); i++) {
                     if (i == this->m_me_) {
                         continue;
                     }
-                    go[this, i] {
+                    go[this, i, timestamp] {
                         co_mtx_.lock();
                         if (m_state_ != STATE::LEADER) {
                             co_mtx_.unlock();
                             return;
                         }
-                        auto timestamp = m_monitor_->timestamp();
+
                         std::shared_ptr<AppendEntriesArgs> args(
                             new AppendEntriesArgs);
                         args->set_term(m_current_term_);
@@ -83,7 +83,7 @@ void Raft::co_appendAentries() {
                                 std::chrono::milliseconds>(end - start)
                                 .count();
                         js["timestamp"] = timestamp;
-                        go[this, js]() { m_monitor_->flush_json(js); };
+                        m_monitor_->flush_json(js);
                         if (!isCallOk) {
                             co_mtx_.unlock();
                             return;

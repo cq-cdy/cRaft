@@ -69,7 +69,7 @@ struct CollectionInstance {
         }
         auto N = mem_data_->size();
         mem_data_->push_back(data);
-        printf("[%d / %d]\n", N, max_size_);
+//        printf("[%d / %d]\n", N, max_size_);
         if (N > max_size_) {
             std::list<T>* disk_io_data = mem_data_;
             mem_data_ = new std::list<T>();

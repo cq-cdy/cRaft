@@ -57,27 +57,28 @@ void startElection(Raft *rf) {
     rf->persist();
     rf->co_mtx_.unlock();
     auto timestamp = rf->m_monitor_->timestamp();
-    go[rf, timestamp]() {
-        nlohmann::json js{};
-        js["role"] = "state";
-        js["timestamp"] = timestamp;
-        js["system_state"] = rf->m_monitor_->get_system_base_state_json();
-        js["raft_state"] = rf->base_json();
-        rf->m_monitor_->flush_json(js);
-    };
+
+    nlohmann::json js{};
+    js["role"] = "state";
+    js["timestamp"] = timestamp;
+    js["system_state"] = rf->m_monitor_->get_system_base_state_json();
+    js["raft_state"] = rf->base_json();
+    rf->m_monitor_->flush_json(js);
+
+    timestamp = rf->m_monitor_->timestamp();
     for (int i = 0; i < allCount; i++) {
         if (i == rf->m_me_) {
             continue;
         }
-        go[rf, i, grantedChan] {
+        go[rf, i, grantedChan, timestamp] {
             rf->co_mtx_.lock();
             std::shared_ptr<RequestVoteArgs> args(new RequestVoteArgs);
-            auto timestamp = rf->m_monitor_->timestamp();
+
             args->set_candidateid(rf->m_me_);
             args->set_term(rf->m_current_term_);
             args->set_lastlogterm(rf->getLastLogTerm());
             args->set_lastlogindex(rf->getLastLogIndex());
-            args->set_timestamp(rf->m_monitor_->timestamp());
+            args->set_timestamp(timestamp);
             std::shared_ptr<RequestVoteReply> reply(new RequestVoteReply);
             auto start = std::chrono::system_clock::now();
             sendRequestVote(rf, i, args, reply);
@@ -85,19 +86,19 @@ void startElection(Raft *rf) {
             auto duration =
                 std::chrono::duration_cast<std::chrono::seconds>(end - start);
             bool is_voted = reply->votegranted();
-            go[rf, is_voted, reply, i, duration, timestamp]() {
-                nlohmann::json js{};
-                js["role"] = "action";
-                js["action"] = "requestVote";
-                js["timestamp"] = timestamp;
-                js["me"] = rf->m_me_;
-                js["peer"] = i;
-                js["is_ok"] = is_voted;
-                js["duration"] = duration.count();
-                js["host_term"] = rf->m_current_term_;
-                js["peer_term"] = reply->term();
-                rf->m_monitor_->flush_json(js);
-            };
+
+            nlohmann::json js{};
+            js["role"] = "action";
+            js["action"] = "requestVote";
+            js["timestamp"] = timestamp;
+            js["me"] = rf->m_me_;
+            js["peer"] = i;
+            js["is_ok"] = is_voted;
+            js["duration"] = duration.count();
+            js["host_term"] = rf->m_current_term_;
+            js["peer_term"] = reply->term();
+            rf->m_monitor_->flush_json(js);
+
             *grantedChan << is_voted;  //  default false ,if rpc  success true;
             if (is_voted) {
                 rf->m_electionTimer->reset(

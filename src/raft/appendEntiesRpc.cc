@@ -11,7 +11,13 @@ Status RpcServiceImpl::appendEntries(::grpc::ServerContext *context,
     response->set_success(false);
     nlohmann::json state_js{};
     nlohmann::json action_js{};
-
+    state_js["role"] = "state";
+    state_js["timestamp"] =
+        m_rf_->m_monitor_
+            ->timestamp();  // here not use request->timestamp() best
+    state_js["system_state"] = m_rf_->m_monitor_->get_system_base_state_json();
+    state_js["raft_state"] = m_rf_->base_json();
+    m_rf_->m_monitor_->flush_json(state_js);
     //
     action_js["role"] = "action";
     action_js["action"] = "receive_append_entries";
@@ -23,7 +29,6 @@ Status RpcServiceImpl::appendEntries(::grpc::ServerContext *context,
     action_js["prevlogindex"] = request->prevlogindex();
     action_js["prevlogterm"] = request->prevlogterm();
     action_js["leadercommit"] = request->leadercommit();
-    m_rf_->m_monitor_->flush_json(state_js);
     int receiveLogBytes = 0;
     do {
         if (request->term() > m_rf_->m_current_term_) {
@@ -83,7 +88,7 @@ Status RpcServiceImpl::appendEntries(::grpc::ServerContext *context,
                     m_rf_->m_logs_.resize(storeIndex + 1);
                     for (const auto &log : request->entries()) {
                         m_rf_->m_logs_.push_back(log);
-                        receiveLogBytes+=log.command().size();
+                        receiveLogBytes += log.command().size();
                     }
                     response->set_nextlogindex(m_rf_->getLastLogIndex() + 1);
                 }
@@ -118,17 +123,15 @@ Status RpcServiceImpl::appendEntries(::grpc::ServerContext *context,
             m_rf_->persist();
         }
     } while (false);
-    m_rf_->co_mtx_.unlock();
+    if (m_rf_->m_logs_.size() >= m_rf_->saveSnapShotSize_) {
+        m_rf_->saveSnapShot(m_rf_->m_commitIndex_);
+    }
     action_js["success"] = response->success();
     action_js["nextlogindex"] = response->nextlogindex();
     action_js["receiveLogBytes"] = receiveLogBytes;
-
-    state_js["role"] = "state";
-    state_js["timestamp"] =m_rf_->m_monitor_->timestamp(); // here not use request->timestamp() best
-    state_js["system_state"] = m_rf_->m_monitor_->get_system_base_state_json();
-    state_js["raft_state"] = m_rf_->base_json();
-    m_rf_->m_monitor_->flush_json(state_js);
     m_rf_->m_monitor_->flush_json(action_js);
+    m_rf_->co_mtx_.unlock();
+
     return Status::OK;
 }
 

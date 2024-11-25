@@ -77,7 +77,7 @@ void Raft::initFromConfig(const std::string &filename) {
     } else {
         m_me_ = std::stoi(ids->second);
     }
-    const char * local_id = std::getenv("RAFT_TEST_ID");
+    const char *local_id = std::getenv("RAFT_TEST_ID");
     if (local_id != nullptr) {
         m_me_ = std::stoi(local_id);
         spdlog::info("RUN IN LOCAL TEST MODE,RAFT_TEST_ID = [{}]", m_me_);
@@ -194,8 +194,9 @@ void Raft::changeToState(STATE toState) {
 }
 
 bool Raft::saveSnapShot(int index) {
-    co_mtx_.lock();
-    co_defer[this] { co_mtx_.unlock(); };
+    return {};
+    // co_mtx_.lock();
+    // co_defer[this] { co_mtx_.unlock(); };
     int snapshotIndex = m_snapShotIndex;
     if (snapshotIndex >= index) {
         spdlog::error("reject saveSnapShot,index = [{}],snapshotIndex = [{}]",
@@ -204,7 +205,8 @@ bool Raft::saveSnapShot(int index) {
     }
     int oldLastSnapshotIndex = m_snapShotIndex;
     m_snapShotTerm = m_logs_[getStoreIndexByLogIndex(index)].term();
-    snapshotIndex = index;
+    // snapshotIndex = index;
+    m_snapShotIndex = index;
     m_logs_.erase(m_logs_.begin(),
                   m_logs_.begin() + index - oldLastSnapshotIndex);
     m_logs_[0].set_term(m_snapShotTerm);
@@ -354,6 +356,9 @@ void Raft::tryCommitLog() {
     }
     if (hasCommit) {
         *m_notifyApplyCh_ << (void *)1;
+        if (this->m_logs_.size() >= this->saveSnapShotSize_) {
+            this->saveSnapShot(this->m_commitIndex_);
+        }
     }
 }
 

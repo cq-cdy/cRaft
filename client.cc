@@ -16,9 +16,9 @@ std::string generateRandomString(int n) {
 static std::string randomBytes() {
     int random_int = std::rand() % 10;
     if (random_int < 3) {
-        return generateRandomString((std::rand() % 5000) + 5000);
+        return generateRandomString((std::rand() % 1500) + 100);
     } else {
-        return generateRandomString((std::rand() % 5000) + 1);
+        return generateRandomString((std::rand() % 500) + 1);
     }
 }
 int main(int argc, char **argv) {
@@ -36,6 +36,6 @@ int main(int argc, char **argv) {
             }
         }).detach();
     }
-    sleep(1000000);
+    sleep(10000000);
     return 0;
 }
