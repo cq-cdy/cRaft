@@ -3,11 +3,22 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 project(cRaft C CXX)
 #set(CMAKE_CXX_FLAGS "-g")
+
 set(CMAKE_PREFIX_PATH "/usr/local" ${CMAKE_PREFIX_PATH})
 include(common.cmake)
-
 include_directories(${PROJECT_SOURCE_DIR}/src)
-# # Protos Directory
+# 设置 libtorch 的路径
+# include_directories(${PROJECT_SOURCE_DIR}/third_party/libtorch/include/torch/csrc/api/include)
+# include_directories(${PROJECT_SOURCE_DIR}/third_party/libtorch/include)
+set(Torch_DIR ${PROJECT_SOURCE_DIR}/thrid_party/libtorch/share/cmake/Torch)
+find_package(Torch REQUIRED)
+
+
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=1")
+endif()
+# Protos Directory
 file(GLOB PROTO_INPUT "./src/protos/*.proto")
 get_filename_component(protos_h_cc "./protos_h_cc" ABSOLUTE)
 get_filename_component(protos_h_cc "./src/rpc" ABSOLUTE)
@@ -65,6 +76,7 @@ add_library(craft STATIC
           libgo
           dl
           pthread
+          ${TORCH_LIBRARIES}
   )
 foreach(_target server client)
     add_executable(${_target} "${_target}.cc")

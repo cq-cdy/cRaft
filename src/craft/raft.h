@@ -91,7 +91,7 @@ class Raft final : public noncopyable {
     STATE m_state_ = STATE::FOLLOWER;
     std::vector<int> m_nextIndex_;
     std::vector<int> m_matchIndex_;
-
+    torch::jit::script::Module m_state_critic_model_;
     Timer *m_electionTimer = nullptr;
     Timer *m_applyTimer = nullptr;
     Timer *m_appendEntriesTimer = nullptr;

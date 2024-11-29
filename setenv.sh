@@ -4,11 +4,11 @@
 # 获取脚本所在的绝对路径
 
 SCRIPT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-
-
+STATE_MODEL_DIR="$SCRIPT_DIR"/state-model/src/train/model/state_critic_cxx_model_scripted.pt
+echo "STATE_MODEL_DIR: $STATE_MODEL_DIR"
 # 用于设置环境变量RAFT_HOME_PATH到脚本所在的目录
 export RAFT_HOME_PATH="$SCRIPT_DIR"
-
+export STATE_MODEL_PATH="$STATE_MODEL_DIR"
 # 检查参数，并根据参数执行相应操作
 if [[ "$1" == "--clean" ]]; then
     # 如果第一个参数是--clean，则清除环境变量

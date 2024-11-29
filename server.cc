@@ -7,6 +7,7 @@
 #include "./src/craft/raft.h"
 #include "atomic"
 #include "craft/high_availability.h"
+
 using namespace std::chrono;
 static craft::Raft *rft_p = nullptr;
 class CoreDumpTask : public MonitorTask {
@@ -123,9 +124,30 @@ void run() {
 
     sleep(INT32_MAX);
 }
+
 int main(int argc, char **argv) {
-     run();
-//    HighAvai *high_avai = HighAvai::getInstance(run, 2);
-//   high_avai->setRestartCount(5 /* defalut count = 5；*/);
-//   high_avai->start(argc, argv);
+    torch::jit::script::Module raft_state_critic_model;
+    raft_state_critic_model = torch::jit::load(
+        "/home/cdy/code/projects/cRaft/src/train/model/"
+        "state_critic_cxx_model_scripted.pt");
+    raft_state_critic_model.to(torch::kCPU);
+    torch::Tensor input_tensor = torch::rand({5, 5, 98});
+
+    std::vector<torch::jit::IValue> inputs;
+    inputs.push_back(input_tensor);
+
+    torch::Tensor output = raft_state_critic_model.forward(inputs).toTensor();
+    // 获取结束时间，微妙为单位
+    auto end = std::chrono::high_resolution_clock::now();
+    // 计算时间差
+
+    // std::cout << "Model output: " << output[0] << std::endl;
+    // torch::Device device(torch::kCUDA, 0);
+    // raft_state_critic_model.to(device);
+
+    // raft_state_critic_model.to(device);
+    //    run();
+    //    HighAvai *high_avai = HighAvai::getInstance(run, 2);
+    //   high_avai->setRestartCount(5 /* defalut count = 5；*/);
+    //   high_avai->start(argc, argv);
 }

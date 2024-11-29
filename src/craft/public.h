@@ -13,7 +13,8 @@
 #include "filesystem"
 #include "spdlog/spdlog.h"
 #include "system/json.hpp"
-
+#include "torch/script.h"
+#include "torch/torch.h"
 using uint = unsigned int;
 
 enum class STATE {

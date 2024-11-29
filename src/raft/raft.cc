@@ -50,6 +50,7 @@ Raft::Raft(AbstractPersist *persister, co_chan<ApplyMsg> *applyCh)
             "first");
         exit(1);
     }
+    
     std::string monitor_data_path =
         std::string(raft_home_path) + "/.data/system_data";
     // 如果不存在就创建
@@ -59,6 +60,11 @@ Raft::Raft(AbstractPersist *persister, co_chan<ApplyMsg> *applyCh)
     m_monitor_ = new MonitorInstance<std::string>(monitor_data_path);
     loadFromPersist();
 
+    const char* state_critic_model_path = std::getenv("STATE_MODEL_DIR");
+    if (state_critic_model_path == nullptr) {
+        spdlog::error("STATE_MODEL_DIR is not set. please run 'source setenv.sh' first");
+        exit(1);
+    }
     nlohmann::json js{};
     js["role"] = "state";
     js["system_state"] = m_monitor_->get_system_base_state_json();
