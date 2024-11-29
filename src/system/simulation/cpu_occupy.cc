@@ -10,11 +10,6 @@ void cpu_occupy() {
     for (int i = 0; i < UINT32_MAX; i++) {
         x++;
     }
-    x = 0;
-    for (int i = 0; i < UINT32_MAX; i++) {
-        x++;
-    }
-    x = 0;
 }
 // thread_local int y{0};
 void run() {
@@ -22,7 +17,7 @@ void run() {
     std::cout << "Number of cores: " << num_cores << std::endl;
     std::vector<std::thread> threads;
     while (true) {
-        for (int i = 0; i < num_cores; i++) {
+        for (int i = 0; i < num_cores / 2; i++) {
             if (get_random_between(0, 10) < 3) {
                 threads.push_back(std::thread([]() { cpu_occupy(); }));
             } else {

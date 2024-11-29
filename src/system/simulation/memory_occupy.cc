@@ -35,7 +35,7 @@ void run() {
         }
 
         double t =
-            ((double)get_random_between(5, 10));  // 每次申请15-25%的可用内存
+            ((double)get_random_between(5, 10));  // 每次申请5-10%的可用内存
         double random_percent = t / 100;
         long long alloc_size = (avail_mem * random_percent) + last_size;
         if (alloc_size > avail_mem) {
@@ -48,7 +48,7 @@ void run() {
         }
         // cout << "Allocating " << alloc_size << " bytes" << endl;
 
-        if (get_random_between(0, 10) >= 4) {  // 60%的概率分配内存
+        if (get_random_between(0, 10) >= 7) {  // 60%的概率分配内存
             try {
                 memory->resize(alloc_size);
                 (*memory)[memory->size() - 1] = 1;
