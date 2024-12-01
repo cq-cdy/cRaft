@@ -131,15 +131,21 @@ int main(int argc, char **argv) {
         "/home/cdy/code/projects/cRaft/src/train/model/"
         "state_critic_cxx_model_scripted.pt");
     raft_state_critic_model.to(torch::kCPU);
-    torch::Tensor input_tensor = torch::rand({5, 5, 98});
 
-    std::vector<torch::jit::IValue> inputs;
-    inputs.push_back(input_tensor);
+    for (int i = 0; i < 100; i++) {
+        // 毫秒级
+        auto start = std::chrono::high_resolution_clock::now();
+        torch::Tensor input_tensor = torch::rand({5, 5, 98});
 
-    torch::Tensor output = raft_state_critic_model.forward(inputs).toTensor();
-    // 获取结束时间，微妙为单位
-    auto end = std::chrono::high_resolution_clock::now();
-    // 计算时间差
+        std::vector<torch::jit::IValue> inputs;
+        inputs.push_back(input_tensor);
+        
+        torch::Tensor output =
+            raft_state_critic_model.forward(inputs).toTensor();
+            auto end = std::chrono::high_resolution_clock::now();
+        std::cout << "Model output: " << output[0] << " time: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << std::endl;
+        
+    }
 
     // std::cout << "Model output: " << output[0] << std::endl;
     // torch::Device device(torch::kCUDA, 0);
