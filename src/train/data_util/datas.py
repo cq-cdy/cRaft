@@ -1,37 +1,50 @@
-FOLLOWER = 0
-CANDIDATE = 1
-LEADER = 2
+from enum import Enum
+
+class State(Enum):
+    FOLLOWER = 0
+    CANDIDATE = 1
+    LEADER = 2
+        
+class Action(Enum):
+    CHANGE_STATE = 0
+    RECEIVE_APPEND_ENTRIES = 1
+    APPEND_ENTRIES = 2
+    REQUEST_VOTE = 3
+    RECEIVE_REQUEST_VOTE = 4
+    SEND_INSTALL_SNAPSHOT_TO_PEER = 5
+    RECEIVE_SNAPSHOT_FILE = 6
+    
+    # for single server
+    F_TO_C = 7
+    C_TO_L = 8
+    L_TO_C = 9
+    C_TO_F = 10
+    
+    # for center server
+    CS_LFFFF = 11
+    CS_FLFFF = 12
+    CS_FFLFF = 13
+    CS_FFFLF = 14
+    CS_FFFFL = 15
+
 state_to_int = {
-    'LEADER':LEADER,
-    'FOLLOWER':FOLLOWER,
-    'CANDIDATE':CANDIDATE
+    'LEADER':State.LEADER,
+    'FOLLOWER':State.FOLLOWER,
+    'CANDIDATE':State.CANDIDATE
 }
 
-
-CHANGE_STATE = 0
-RECEIVE_APPEND_ENTRIES = 1
-APPEND_ENTRIES = 2
-REQUEST_VOTE = 3
-RECEIVE_REQUEST_VOTE = 4
-SEND_INSTALL_SNAPSHOT_TO_PEER = 5
-RECEIVE_SNAPSHOT_FILE = 6
-F_TO_C = 7
-C_TO_L = 8
-L_TO_C = 9
-C_TO_F = 10
-
 action_to_int = {
-    'change_state' :CHANGE_STATE,
-    'receive_append_entries' :RECEIVE_APPEND_ENTRIES,
-    'appendEntries':  APPEND_ENTRIES, 
-    'requestVote': REQUEST_VOTE, 
-    'receive_request_vote': RECEIVE_REQUEST_VOTE,
-    'sendInstallSnapshotToPeer':  SEND_INSTALL_SNAPSHOT_TO_PEER,
-    'receive_snapshot_file': RECEIVE_SNAPSHOT_FILE,
-    'f_to_c': F_TO_C,
-    'c_to_l': C_TO_L,
-    'l_to_c': L_TO_C,
-    'c_to_f': C_TO_F
+    'change_state' :Action.CHANGE_STATE,
+    'receive_append_entries' :Action.RECEIVE_APPEND_ENTRIES,
+    'appendEntries':  Action.APPEND_ENTRIES, 
+    'requestVote': Action.REQUEST_VOTE, 
+    'receive_request_vote': Action.RECEIVE_REQUEST_VOTE,
+    'sendInstallSnapshotToPeer':  Action.SEND_INSTALL_SNAPSHOT_TO_PEER,
+    'receive_snapshot_file': Action.RECEIVE_SNAPSHOT_FILE,
+    'f_to_c': Action.F_TO_C,
+    'c_to_l': Action.C_TO_L,
+    'l_to_c': Action.L_TO_C,
+    'c_to_f': Action.C_TO_F
 }
 
 def filterPredicate(key):
@@ -46,7 +59,7 @@ def flattenJsonKeys(js_data):
         else:
             keys.append(key)
     return keys
-#reward  = -log(1 + timeline) * stata
+
 def flattenJsonValue(js_data):
     values = []
     for key in js_data:
@@ -92,6 +105,18 @@ def handleOriginFlattendJson(js):
     js['TX Bytes'] = js['TX Bytes'] / 1024
     js['RX Bytes'] = js['RX Bytes'] / 1024
     return js
+
+def CenterServerOriginFlattendJson(js):
+    if('timestamp' in js):js.pop('timestamp')
+    for key in js:
+        if js[key] is None:
+            js[key] = 0
+        if(js[key] > 1024):
+            js[key] = js[key] / 1024
+    js['TX Bytes'] = js['TX Bytes'] / 1024
+    js['RX Bytes'] = js['RX Bytes'] / 1024
+    return js
+
 def handleStateJson(js):
     js = flattenJson(js)
     return handleOriginFlattendJson(js)
