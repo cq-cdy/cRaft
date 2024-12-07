@@ -54,6 +54,25 @@ class CenterActionNetWork(torch.nn.Module):
             out = self.softmax(self.each_output_action_learys[i](out))
             outputs.append(out)
    
-
         outputs = torch.stack(outputs,dim=-2)
         return outputs
+    
+class SingleActionNetWork(torch.nn.Module):
+    def __init__(self, state_critic_model,acion_nums, input_size, hidden_size=512, num_attion_head=8):
+        super(SingleActionNetWork, self).__init__()
+        
+        self.state_critic_model = state_critic_model
+        self.state_critic_model.eval()
+        self.action_nums = acion_nums 
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.num_attion_head = num_attion_head
+
+    def forward(self, x):
+        # x :(batch_size, input_size)
+        state_value = self.state_critic_model(x).item()
+        # state_value 越大，越需要尽可能的交付日志，若交付失败，则可以告诉客户端，就可能集群即将重新选主
+        # state_value 越小，就可以尽可能的减少交付日志，减少网络开销
+        # 仍存在有未被同步的日志被覆盖的情况。
+        return x
+        

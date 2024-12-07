@@ -1,5 +1,5 @@
 from enum import Enum
-
+import math
 class State(Enum):
     FOLLOWER = 0
     CANDIDATE = 1
@@ -26,6 +26,7 @@ class Action(Enum):
     CS_FFLFF = 13
     CS_FFFLF = 14
     CS_FFFFL = 15
+    NOTHING = 16
 
 state_to_int = {
     'LEADER':State.LEADER,
@@ -48,75 +49,84 @@ action_to_int = {
 }
 
 def filterPredicate(key):
-    return key in ["ip_index","nextIndex"]
+    return key in ["raft_state.ip_index","raft_state.nextIndex"]
 
-def flattenJsonKeys(js_data):
+def flattenJson(js_data, prefix='', filter_func=None):
+    """
+    展平 JSON 数据，返回键和值的两个列表，保持一一对应。
+    
+    :param js_data: 需要展平的 JSON 数据（字典）
+    :param prefix: 用于构建复合键的前缀字符串，默认为空
+    :param filter_func: 可选的过滤函数，接受一个键作为参数并返回布尔值
+    :return: 两个列表，分别是展平后的键列表和值列表
+    """
     keys = []
-    for key in js_data:
-        if filterPredicate(key):continue
-        if isinstance(js_data[key], dict) :
-            keys.extend(flattenJsonKeys(js_data[key]))
-        else:
-            keys.append(key)
-    return keys
-
-def flattenJsonValue(js_data):
     values = []
-    for key in js_data:
-        if filterPredicate(key):continue
-        if isinstance(js_data[key], dict):
-            values.extend(flattenJsonValue(js_data[key]))
-        else:
-            v = js_data[key]
-            if (key == 'timestamp'):
-                values.append(int(v))
-            elif key == 'state':
-                values.append(state_to_int[v])
-            elif key == 'action':
-                values.append(action_to_int[v])
-            elif key == 'cpu':
-                values.append(v * 10)
-            else:
-                values.append(v)
-    return values
 
-def flattenJson(json):
-    keys = flattenJsonKeys(json)
-    values = flattenJsonValue(json)
-    js_data = {}
-    for i in range(len(keys)):
-        js_data[keys[i]] = values[i]
-    return js_data
+    for key, value in js_data.items():
+        if filter_func and filter_func(key):
+            continue
+
+        # 构建复合键
+        full_key = f"{prefix}.{key}" if prefix else key
+
+        if isinstance(value, dict):
+            # 如果值是字典，则递归调用 flattenJson
+            sub_keys, sub_values = flattenJson(value, full_key, filter_func)
+            keys.extend(sub_keys)
+            values.extend(sub_values)
+        else:
+            # 对特定键进行转换
+            if key == 'timestamp':
+                value = int(value)  # 确保可以安全转换
+            elif key == 'state' and isinstance(state_to_int, dict) and value in state_to_int:
+                value = state_to_int[value].value
+            elif key == 'action' and isinstance(action_to_int, dict) and value in action_to_int:
+                value = action_to_int[value].value
+            elif key == 'cpu':
+                value = float(value) * 10  # 确保可以安全转换
+
+            # 添加键值对到列表中
+            keys.append(full_key)
+            values.append(value)
+
+    return keys, values
+
+# def flattenJson(json):
+#     keys = flattenJsonKeys(json)
+#     values = flattenJsonValue(json)
+#     js_data = {}
+#     for i in range(len(keys)):
+#         js_data[keys[i]] = values[i]
+#     return js_data
 
 def handleOriginFlattendJson(js):
     if('timestamp' in js):js.pop('timestamp')
     if('role' in js):js.pop('role')
-    if('commitIndex' in js):js.pop('commitIndex')
-    if('lastLogIndex' in js):js.pop('lastLogIndex')
-    if('logsize' in js):js.pop('logsize')
-    if('snapShotIndex' in js):js.pop('snapShotIndex')
-    if('snapShotTerm' in js):js.pop('snapShotTerm')
-    if('term' in js):js.pop('term')
+    if('raft_state.commitIndex' in js):js.pop('raft_state.commitIndex')
+    if('raft_state.lastLogIndex' in js):js.pop('raft_state.lastLogIndex')
+    if('raft_state.logsize' in js):js.pop('raft_state.logsize')
+    if('raft_state.snapShotIndex' in js):js.pop('raft_state.snapShotIndex')
+    if('raft_state.snapShotTerm' in js):js.pop('raft_state.snapShotTerm')
+    if('raft_state.term' in js):js.pop('raft_state.term')
     for key in js:
         if js[key] is None:
             js[key] = 0
-        if(js[key] > 1024):
-            js[key] = js[key] / 1024
-    js['TX Bytes'] = js['TX Bytes'] / 1024
-    js['RX Bytes'] = js['RX Bytes'] / 1024
+        if(key.startswith('system_state')):
+            js[key] = math.log10(1 + js[key])
     return js
 
-def CenterServerOriginFlattendJson(js):
-    if('timestamp' in js):js.pop('timestamp')
-    for key in js:
-        if js[key] is None:
-            js[key] = 0
-        if(js[key] > 1024):
-            js[key] = js[key] / 1024
-    js['TX Bytes'] = js['TX Bytes'] / 1024
-    js['RX Bytes'] = js['RX Bytes'] / 1024
-    return js
 
 def handleStateJson(js):
     js = flattenJson(js)
     return handleOriginFlattendJson(js)
+
+def average_k_elements(lst, k):
+    if k <= 0:
+        raise ValueError("K must be a positive integer greater than zero.")
+    averages = []
+    for i in range(0, len(lst), k):
+        group = lst[i:i+k]  
+        group_average = sum(group) / len(group)  
+        averages.append(group_average)  
+    return averages
