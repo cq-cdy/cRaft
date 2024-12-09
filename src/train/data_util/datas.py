@@ -4,7 +4,10 @@ class State(Enum):
     FOLLOWER = 0
     CANDIDATE = 1
     LEADER = 2
-        
+
+class ActionType    (Enum):
+    LOCAL = 0,
+    REMOTE = 1,
 class Action(Enum):
     CHANGE_STATE = 0
     RECEIVE_APPEND_ENTRIES = 1
@@ -13,20 +16,29 @@ class Action(Enum):
     RECEIVE_REQUEST_VOTE = 4
     SEND_INSTALL_SNAPSHOT_TO_PEER = 5
     RECEIVE_SNAPSHOT_FILE = 6
+    TO_C=5
+    TO_L=6
+    TO_F=7
+    CALL_0=8
+    CALL_1=9
+    CALL_2=10
+    CALL_3=11
+    CALL_4=12
+    CORE_CUMP=13
     
     # for single server
-    F_TO_C = 7
-    C_TO_L = 8
-    L_TO_C = 9
-    C_TO_F = 10
+    # F_TO_C = 7
+    # C_TO_L = 8
+    # L_TO_C = 9
+    # C_TO_F = 10
     
-    # for center server
-    CS_LFFFF = 11
-    CS_FLFFF = 12
-    CS_FFLFF = 13
-    CS_FFFLF = 14
-    CS_FFFFL = 15
-    NOTHING = 16
+    # # for center server
+    # CS_LFFFF = 11
+    # CS_FLFFF = 12
+    # CS_FFLFF = 13
+    # CS_FFFLF = 14
+    # CS_FFFFL = 15
+    # NOTHING = 16
 
 state_to_int = {
     'LEADER':State.LEADER,
@@ -42,10 +54,13 @@ action_to_int = {
     'receive_request_vote': Action.RECEIVE_REQUEST_VOTE,
     'sendInstallSnapshotToPeer':  Action.SEND_INSTALL_SNAPSHOT_TO_PEER,
     'receive_snapshot_file': Action.RECEIVE_SNAPSHOT_FILE,
-    'f_to_c': Action.F_TO_C,
-    'c_to_l': Action.C_TO_L,
-    'l_to_c': Action.L_TO_C,
-    'c_to_f': Action.C_TO_F
+    'to_c': Action.TO_C,
+    'to_l': Action.TO_L,
+    'to_f': Action.TO_F,
+    # 'f_to_c': Action.F_TO_C,
+    # 'c_to_l': Action.C_TO_L,
+    # 'l_to_c': Action.L_TO_C,
+    # 'c_to_f': Action.C_TO_F
 }
 
 def filterPredicate(key):

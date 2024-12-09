@@ -10,7 +10,8 @@ class CenterActionNetWork(torch.nn.Module):
         self.num_attion_head = num_attion_head
         self.acion_nums = acion_nums
 
-        self.sum_hidden_size = hidden_size *  self.num_servers
+
+        self.sum_hidden_size =  self.hidden_size *  self.num_servers
         self.liner1 = nn.Linear(self.input_size, self.hidden_size)
         self.liner2 = nn.Linear(self.hidden_size, self.sum_hidden_size)
         self.liner3 = nn.Linear(self.sum_hidden_size, self.sum_hidden_size)
@@ -26,12 +27,12 @@ class CenterActionNetWork(torch.nn.Module):
             [nn.Linear(self.hidden_size, self.acion_nums) for _ in range(self.num_servers)]
         )
 
-        self.softmax = nn.Softmax(dim=-1)
+        self.sigmoid = nn.Sigmoid()
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(0.3)
 
     def forward(self, x):
-        x = x.view(2,-1)
+        x = x.view(x.shape[0],-1)
         x = self.relu(self.liner1(x))
         x = self.dropout(x)
 
@@ -51,7 +52,8 @@ class CenterActionNetWork(torch.nn.Module):
         outputs = []
         for i in range(self.num_servers):
             out = self.relu(self.each_output_linear_layers[i](x_split[i]))
-            out = self.softmax(self.each_output_action_learys[i](out))
+            # out = self.sigmoid(self.each_output_action_learys[i](out))
+            out =self.each_output_action_learys[i](out)
             outputs.append(out)
    
         outputs = torch.stack(outputs,dim=-2)
