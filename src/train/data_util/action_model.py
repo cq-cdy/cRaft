@@ -1,63 +1,77 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
-class CenterActionNetWork(torch.nn.Module):
-    def __init__(self, num_servers ,acion_nums, input_size, hidden_size=1024, num_attion_head=8):
-        super(CenterActionNetWork, self).__init__()
+class CenterActionNetwork(nn.Module):
+    def __init__(self, num_servers, action_nums, input_size, hidden_size=512, num_attention_heads=4):
+        super(CenterActionNetwork, self).__init__()
         self.num_servers = num_servers
-        self.input_size = input_size *  self.num_servers
+        self.action_nums = action_nums
+        self.input_size = input_size
         self.hidden_size = hidden_size
-        self.num_attion_head = num_attion_head
-        self.acion_nums = acion_nums
-
-
-        self.sum_hidden_size =  self.hidden_size *  self.num_servers
-        self.liner1 = nn.Linear(self.input_size, self.hidden_size)
-        self.liner2 = nn.Linear(self.hidden_size, self.sum_hidden_size)
-        self.liner3 = nn.Linear(self.sum_hidden_size, self.sum_hidden_size)
-
-        self.attenion_layer = nn.MultiheadAttention(self.sum_hidden_size, self.num_attion_head)
-
-        self.liner4 = nn.Linear(self.sum_hidden_size, self.sum_hidden_size)
-
-        self.each_output_linear_layers = nn.ModuleList(
-            [nn.Linear(self.hidden_size, self.hidden_size) for _ in range(self.num_servers)]
+        self.num_attention_heads = num_attention_heads
+        
+        # Input Linear Layer
+        self.input_layer = nn.Linear(input_size, hidden_size)
+        self.input_norm = nn.LayerNorm(hidden_size)  # LayerNorm after input layer
+        
+        # Shared Fully Connected Layers
+        self.shared_fc = nn.Sequential(
+            nn.Linear(hidden_size, hidden_size),
+            nn.LayerNorm(hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, hidden_size),
+            nn.LayerNorm(hidden_size),
+            nn.ReLU()
         )
-        self.each_output_action_learys = nn.ModuleList(
-            [nn.Linear(self.hidden_size, self.acion_nums) for _ in range(self.num_servers)]
-        )
-
-        self.sigmoid = nn.Sigmoid()
-        self.relu = nn.ReLU()
-        self.dropout = nn.Dropout(0.3)
-
+        
+        # Multi-Head Attention with LayerNorm
+        self.attention = nn.MultiheadAttention(embed_dim=hidden_size, num_heads=num_attention_heads, batch_first=True)
+        self.attention_norm = nn.LayerNorm(hidden_size)  # LayerNorm after residual connection
+        
+        # Server-Specific Fully Connected Layers
+        self.server_fc1 = nn.ModuleList([
+            nn.Sequential(
+                nn.Linear(hidden_size // num_servers, hidden_size // num_servers),
+                nn.LayerNorm(hidden_size // num_servers),
+                nn.ReLU(),
+                nn.Linear(hidden_size // num_servers, action_nums)
+            ) for _ in range(num_servers)
+        ])
+        
     def forward(self, x):
-        x = x.view(x.shape[0],-1)
-        x = self.relu(self.liner1(x))
-        x = self.dropout(x)
-
-        x = self.relu(self.liner2(x))
-        x = self.dropout(x)
-
-        x = self.relu(self.liner3(x))
-        x = self.dropout(x)
-        residual = x
-        attn_input =x.unsqueeze(1).transpose(0, 1) 
-        attn_output, _ = self.attenion_layer(attn_input, attn_input, attn_input)
-        attn_output = attn_output.transpose(0, 1).squeeze(1) 
-        x = attn_output + 0.5 * residual
-        x = self.relu(self.liner4(x))
-        x = self.dropout(x)
-        x_split = torch.split(x, self.hidden_size, dim=-1)
+        """
+        x: Tensor of shape (batch_size, num_servers, input_size)
+        """
+        batch_size, num_servers, _ = x.shape
+        
+        # Step 1: Input layer and normalization
+        x = self.input_layer(x)  # Linear layer
+        x = self.input_norm(x)   # LayerNorm
+        x = F.relu(x)
+        
+        # Step 2: Shared fully connected layers
+        x = self.shared_fc(x)    # Shared FC layers
+        x = x.view(batch_size, num_servers, self.hidden_size)
+        
+        # Step 3: Multi-head Attention with Residual Connection
+        attn_output, _ = self.attention(x, x, x)  # Self-attention
+        x = x + attn_output        # Residual connection
+        x = self.attention_norm(x) # LayerNorm after residual
+        x = F.relu(x)
+        
+        # Step 4: Split hidden states and apply server-specific layers
+        split_size = self.hidden_size // self.num_servers
         outputs = []
+        
         for i in range(self.num_servers):
-            out = self.relu(self.each_output_linear_layers[i](x_split[i]))
-            # out = self.sigmoid(self.each_output_action_learys[i](out))
-            out =self.each_output_action_learys[i](out)
-            outputs.append(out)
-   
-        outputs = torch.stack(outputs,dim=-2)
-        return outputs
+            hidden_part = x[:, i, :split_size]  # Split the hidden representation for each server
+            output = self.server_fc1[i](hidden_part)  # Pass through server-specific FC layers
+            outputs.append(output.unsqueeze(1))
+        
+        # Concatenate outputs for all servers
+        outputs = torch.cat(outputs, dim=1)  # Shape: (batch_size, num_servers, action_nums)
+        return outputs,attn_output
     
 class SingleActionNetWork(torch.nn.Module):
     def __init__(self, state_critic_model,acion_nums, input_size, hidden_size=512, num_attion_head=8):

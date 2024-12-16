@@ -14,17 +14,17 @@ class Action(Enum):
     APPEND_ENTRIES = 2
     REQUEST_VOTE = 3
     RECEIVE_REQUEST_VOTE = 4
-    SEND_INSTALL_SNAPSHOT_TO_PEER = 5
-    RECEIVE_SNAPSHOT_FILE = 6
-    TO_C=5
-    TO_L=6
-    TO_F=7
-    CALL_0=8
-    CALL_1=9
-    CALL_2=10
-    CALL_3=11
-    CALL_4=12
-    CORE_CUMP=13
+    # SEND_INSTALL_SNAPSHOT_TO_PEER = 5
+    # RECEIVE_SNAPSHOT_FILE = 6
+    # TO_C=7
+    TO_L=5
+    TO_F=6
+    CALL_0=7
+    CALL_1=8
+    CALL_2=9
+    CALL_3=10
+    CALL_4=11
+    # CORE_CUMP=15
     
     # for single server
     # F_TO_C = 7
@@ -52,9 +52,9 @@ action_to_int = {
     'appendEntries':  Action.APPEND_ENTRIES, 
     'requestVote': Action.REQUEST_VOTE, 
     'receive_request_vote': Action.RECEIVE_REQUEST_VOTE,
-    'sendInstallSnapshotToPeer':  Action.SEND_INSTALL_SNAPSHOT_TO_PEER,
-    'receive_snapshot_file': Action.RECEIVE_SNAPSHOT_FILE,
-    'to_c': Action.TO_C,
+    # 'sendInstallSnapshotToPeer':  Action.SEND_INSTALL_SNAPSHOT_TO_PEER,
+    # 'receive_snapshot_file': Action.RECEIVE_SNAPSHOT_FILE,
+    # 'to_c': Action.TO_C,
     'to_l': Action.TO_L,
     'to_f': Action.TO_F,
     # 'f_to_c': Action.F_TO_C,
@@ -99,7 +99,10 @@ def flattenJson(js_data, prefix='', filter_func=None):
             elif key == 'action' and isinstance(action_to_int, dict) and value in action_to_int:
                 value = action_to_int[value].value
             elif key == 'cpu':
+                if (value is None):
+                    value = 0
                 value = float(value) * 10  # 确保可以安全转换
+             
 
             # 添加键值对到列表中
             keys.append(full_key)
